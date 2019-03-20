@@ -1,7 +1,11 @@
 # ==================================================================
-#  tubex-lib - cmake configuration file
+#  tubex-lib - build script
 # ==================================================================
 
-add_subdirectory(basics)
-add_subdirectory(robotics)
-add_subdirectory(solver)
+#!/bin/bash
+
+mkdir make -p
+cd make
+cmake ..
+make
+cd ..
