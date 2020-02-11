@@ -1,0 +1,52 @@
+# ==================================================================
+#  tubex-solve - travis test script
+# ==================================================================
+
+language: c++
+sudo: false
+
+addons:
+  apt:
+    sources:
+    - deadsnakes
+    - ubuntu-toolchain-r-test
+    - chef-current-precise
+
+    packages:
+    - cmake
+    - g++-5
+
+sudo: required
+
+matrix:
+  include:
+  - os: linux
+    compiler: g++-5
+
+install:
+
+  # IBEX
+  
+  - echo 'Installing IBEX...';
+  - git clone https://github.com/ibex-team/ibex-lib
+  - cd ibex-lib
+  - git checkout 81a0c0e930fbe158699e070fa39abc7d8082eb68
+  - ./waf configure --with-debug --interval-lib=gaol
+  - sudo ./waf install
+  - cd ..
+  # todo: use CMake to install IBEX
+
+  # Tubex
+
+  - echo 'Installing Tubex...';
+  - git clone https://github.com/SimonRohou/tubex-lib
+  - cd tubex-lib
+  - mkdir make
+  - cd make
+  - cmake ..
+  - make
+  - sudo make install
+  - cd ..
+
+script:
+  - ./build.sh 
