@@ -14,6 +14,10 @@ set (CMAKE_INSTALL_INCLUDEDIR "include" CACHE PATH "C++ header files (include)")
 set (CMAKE_INSTALL_LIBDIR "lib" CACHE PATH "object code libraries (lib)")
 set (CMAKE_INSTALL_BINDIR "bin" CACHE PATH "user executables (bin)")
 
+get_filename_component(TUBELIB_DATA_DIR    "./make"     ABSOLUTE)
+
+set (CMAKE_BINDIR "./make/bin")
+
 ################################################################################
 # Check that the compiler supports c++11
 ################################################################################
@@ -61,10 +65,29 @@ add_subdirectory (problems)
 ################################################################################
 # Tests
 ################################################################################
-#include(CTest)
-#if (BUILD_TESTING)
-#  add_custom_target (check
-#                      COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure $(ARGS)
-#                      DEPENDS ibex-plugin COMMENT "Running the tests")
-#  add_subdirectory (tests EXCLUDE_FROM_ALL)
-#endif ()
+option(BUILD_TESTS "Build test" OFF)
+if(BUILD_TESTS)
+  enable_testing(true)
+  include(CTest)
+
+  add_test(NAME solver_01
+           COMMAND ./problems/01_picard/01_picard 0)
+  add_test(NAME solver_02
+           COMMAND ./problems/02_xmsin_fwd/02_xmsin_fwd 0)
+  #add_test(NAME solver_03
+  #         COMMAND ./problems/03_xmsin_bwd/03_xmsin_bwd 0)
+  add_test(NAME solver_04
+           COMMAND ./problems/04_bvp/04_bvp 0)
+  # add_test(NAME solver_05
+  #          COMMAND ./problems/05_delay/05_delay 0)
+  # add_test(NAME solver_06
+  #          COMMAND ./problems/06_bvp_delay/06_bvp_delay 0)
+  add_test(NAME solver_07
+           COMMAND ./problems/07_integro_diff/07_integro_diff 0)
+  # add_test(NAME solver_08
+  #          COMMAND ./problems/08_bvp_delay_2d/08_bvp_delay_2d 0)
+  add_test(NAME solver_09
+           COMMAND ./problems/09_csdp/09_csdp 0)
+  add_test(NAME solver_10
+           COMMAND ./problems/10_large_initvalue/10_large_initvalue 0)
+endif()

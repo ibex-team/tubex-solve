@@ -49,4 +49,7 @@ install:
   - cd ..
 
 script:
+  
   - ./build.sh 
+  - cd make
+  - make test

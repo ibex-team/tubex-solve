@@ -1,5 +1,5 @@
 /** 
- *  tubex-lib - Examples
+ *  tubex-solve - Problems
  *  Solver testcase
  * ----------------------------------------------------------------------------
  *
