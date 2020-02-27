@@ -24,16 +24,24 @@ void contract(TubeVector& x)
   // Differential equation
 
   tubex::Function f("x1", "x2", "(x2;-x1)");
+  ibex::Function f1("x1", "x2", "(x2;-x1)");
 
     CtcPicard ctc_picard;
     ctc_picard.preserve_slicing(true);
-    if (x.volume() > 50000.)
+    if (x.volume() > 1.e10)
       ctc_picard.contract(f, x);
     
-    CtcDeriv ctc_deriv;
+    TubeVector v = f.eval_vector(x);
     //ctc_deriv.preserve_slicing(true);
-    ctc_deriv.set_fast_mode(true);
-    ctc_deriv.contract(x, f.eval_vector(x));
+    /*
+      CtcDeriv ctc_deriv;
+      ctc_deriv.set_fast_mode(true);
+      ctc_deriv.contract(x, v);
+    */
+    CtcCidSlicing ctc_cidslicing (f1);
+    ctc_cidslicing.contract(x,v,BACKWARD,false);
+    ctc_cidslicing.contract(x,v,FORWARD,false);
+
 }
 
 int main()
@@ -62,15 +70,15 @@ int main()
     tubex::Solver solver(epsilon);
     solver.set_refining_fxpt_ratio(0.9995);
     solver.set_propa_fxpt_ratio(0.9999);
-    solver.set_cid_fxpt_ratio(0.9999);
-    //    solver.set_cid_fxpt_ratio(0.);
+    //solver.set_cid_fxpt_ratio(0.9999);
+    solver.set_cid_fxpt_ratio(0.);
     solver.set_cid_propa_fxpt_ratio(0.9999);
     solver.set_trace(1);
     solver.set_cid_timept(2);
     solver.set_bisection_timept(2);
-    solver.set_max_slices(40000);
+    solver.set_max_slices(20000);
 
-    solver.set_refining_mode(3);
+    solver.set_refining_mode(2);
     list<TubeVector> l_solutions = solver.solve(x, &contract);
 
     return (0);

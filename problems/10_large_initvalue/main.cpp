@@ -23,26 +23,27 @@ void contract(TubeVector& x)
   ibex::Function f1("x", "-x");
 
   CtcPicard ctc_picard;
-  ctc_picard.preserve_slicing(true);
+  ctc_picard.preserve_slicing(false);
   if (x.volume() > 50000.0)
     ctc_picard.contract(f, x);
 
 
   TubeVector v = f.eval_vector(x);
-
+  /*
    CtcCidSlicing ctc_cidslicing (f1);
    
 
    ctc_cidslicing.preserve_slicing(false);
    ctc_cidslicing.contract(x,v,FORWARD,false);
+  */
    //   ctc_cidslicing.contract(x,v,BACKWARD,false);
 
 
-   /*   
+
   CtcDeriv ctc_deriv;
   ctc_deriv.preserve_slicing(false);
   ctc_deriv.contract(x, f.eval_vector(x));
-   */
+
   
 }
 
@@ -65,8 +66,8 @@ int main()
     tubex::Solver solver(epsilon);
     solver.set_refining_fxpt_ratio(0.9999);
     solver.set_propa_fxpt_ratio(0.9999);
-    solver.set_cid_fxpt_ratio(0.9);
-    //    solver.set_cid_fxpt_ratio(0.);
+    //solver.set_cid_fxpt_ratio(0.9);
+    solver.set_cid_fxpt_ratio(0.);
 
     solver.set_cid_propa_fxpt_ratio(0.999);
     solver.set_cid_timept(1);

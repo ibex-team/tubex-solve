@@ -33,11 +33,12 @@ void contract(TubeVector& x)
   ctc_deriv.preserve_slicing(false);
   ctc_deriv.contract(x, f.eval_vector(x),FORWARD | BACKWARD);
   */
- CtcCidSlicing ctc_cidslicing (f1);
-   TubeVector v = f.eval_vector(x);
+  
+    CtcCidSlicing ctc_cidslicing (f1);
+    TubeVector v = f.eval_vector(x);
 
-   ctc_cidslicing.contract(x,v,BACKWARD,false);
-   ctc_cidslicing.contract(x,v,FORWARD,false);
+    ctc_cidslicing.contract(x,v,BACKWARD,false);
+    ctc_cidslicing.contract(x,v,FORWARD,false);
   
 }
 
@@ -79,7 +80,8 @@ int main()
       solver.set_cid_propa_fxpt_ratio(0.999);
       solver.set_cid_timept(-1);
       solver.set_refining_mode(0);
-      solver.set_max_slices(40000);
+      solver.set_max_slices(20000);
+      solver.set_trace(1);
       //    solver.figure()->add_trajectoryvector(&truth, "truth");
       list<TubeVector> l_solutions = solver.solve(x, &contract);
       cout << "time " << (i+1)*step ;

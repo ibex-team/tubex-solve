@@ -24,22 +24,19 @@ void contract(TubeVector& x)
 
   CtcPicard ctc_picard;
   ctc_picard.preserve_slicing(false);
-  if (x.volume() > 10000)
+  if (x.volume() > 50000.)
     ctc_picard.contract(f, x, FORWARD | BACKWARD);
 
-  //TubeVector v = f.eval_vector(x);
+  TubeVector v = f.eval_vector(x);
   /*
   CtcDeriv ctc_deriv;
   ctc_deriv.preserve_slicing(false);
   ctc_deriv.contract(x, v, FORWARD | BACKWARD);
   */
-  //CtcCidSlicing ctc_cidslicing (f1,8,1.e-4);
   
   CtcCidSlicing ctc_cidslicing (f1);
-  TubeVector v = f.eval_vector(x);
-
    ctc_cidslicing.contract(x,v,BACKWARD,false);
-   ctc_cidslicing.contract(x,v,FORWARD,false);
+  ctc_cidslicing.contract(x,v,FORWARD,false);
   
   
   // Check if the following is useful:   seems useless (BN)
@@ -82,14 +79,14 @@ int main()
     solver.set_refining_fxpt_ratio(0.999);
     solver.set_propa_fxpt_ratio(0.99999);
     //    solver.set_cid_fxpt_ratio(0.99999);
-    //    solver.set_cid_fxpt_ratio(0.1);
+    //solver.set_cid_fxpt_ratio(0.1);
     solver.set_cid_fxpt_ratio(0.);
     
     solver.set_cid_propa_fxpt_ratio(0.99999);
     solver.set_cid_timept(2);
     //solver.set_cid_fxpt_ratio(0.);
     solver.set_trace(1);
-    solver.set_max_slices(1000);
+    solver.set_max_slices(4000);
     solver.set_refining_mode(3);
     solver.set_bisection_timept(2);
     // Displaying the additional restriction:

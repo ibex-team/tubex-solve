@@ -47,18 +47,18 @@ void contract(TubeVector& x)
     ctc_picard.preserve_slicing(true);
     if (x.volume() > 1.e100)
       ctc_picard.contract(f, x);
-    /*    
+    
     CtcDeriv ctc_deriv;
     ctc_deriv.preserve_slicing(false);
     ctc_deriv.set_fast_mode(true);
     ctc_deriv.contract(x, f.eval_vector(x));
-    */
+    /*
    CtcCidSlicing ctc_cidslicing (f1);
    TubeVector v = f.eval_vector(x);
    ctc_cidslicing.preserve_slicing(false);
    ctc_cidslicing.contract(x,v,FORWARD,false);
    ctc_cidslicing.contract(x,v,BACKWARD,false);
-
+    */
      
 }
 
