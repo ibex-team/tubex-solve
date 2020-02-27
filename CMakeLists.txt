@@ -2,9 +2,10 @@
 #  tubex-solve - cmake configuration file
 # ==================================================================
 
-cmake_minimum_required (VERSION 3.0.2)
+#cmake_minimum_required (VERSION 3.0.2)
+cmake_minimum_required (VERSION 2.8)
 
-project (TUBEX_SOLVE VERSION 0.42 LANGUAGES CXX)
+#project (TUBEX_SOLVE VERSION 0.42 LANGUAGES CXX)
 set (TUBEX_SOLVE_DESCRIPTION "Short description of the plugin")
 
 ################################################################################
@@ -45,16 +46,30 @@ check_cxx_compiler_flag("-Wno-deprecated" COMPILER_SUPPORTS_WNO_DEPRECATED)
 if(COMPILER_SUPPORTS_WNO_DEPRECATED)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated")
 endif()
+set(CMAKE_CXX_FLAGS     "${CMAKE_CXX_FLAGS} -O3")
+#set(CMAKE_CXX_FLAGS     "${CMAKE_CXX_FLAGS} -DNDEBUG") # comment for debug
 
 ################################################################################
 # Looking for Ibex, Tubex
 ################################################################################
 #find_package (IBEX 2.8.3 REQUIRED)
-include (FindPkgConfig)
-pkg_search_module (IBEX REQUIRED ibex)
-message (STATUS "Found Ibex version ${IBEX_VERSION}")
-pkg_search_module (TUBEX REQUIRED tubex)
-message (STATUS "Found Tubex version ${TUBEX_VERSION}")
+#include (FindPkgConfig)
+#pkg_search_module (IBEX REQUIRED ibex)
+#message (STATUS "Found Ibex version ${IBEX_VERSION}")
+#pkg_search_module (TUBEX REQUIRED tubex)
+#message (STATUS "Found Tubex version ${TUBEX_VERSION}")
+
+set(TUBEX_INCLUDE_DIRS "/certis/3/neveub/RECHERCHE/tubex/tubex2/tubex-lib/make/include"
+                       "/certis/3/neveub/RECHERCHE/tubex/tubex2/tubex-lib/make/src/core"
+                       "/certis/3/neveub/RECHERCHE/ibex/ibex-2.8/ibex-lib/include/ibex"
+                       "/certis/3/neveub/RECHERCHE/ibex/ibex-2.8/ibex-lib/include"
+                       "/certis/3/neveub/RECHERCHE/ibex/ibex-2.8/ibex-lib/include/ibex/3rd"
+                       "/certis/3/neveub/RECHERCHE/soplex/soplex-3.1.1/src")
+link_directories("/certis/3/neveub/RECHERCHE/tubex/tubex2/tubex-lib/make/src/core"
+                 "/certis/3/neveub/RECHERCHE/ibex/ibex-2.8/ibex-lib/lib"
+                 "/certis/3/neveub/RECHERCHE/ibex/ibex-2.8/ibex-lib/lib/ibex/3rd"
+		 "/certis/3/neveub/RECHERCHE/soplex/soplex-3.1.1/lib")
+set(TUBEX_LDFLAGS "tubex" "ibex" "gaol" "ultim" "gdtoa" "soplex")
 
 ################################################################################
 # Compile sources
