@@ -10,15 +10,22 @@ using namespace tubex;
 void contract(TubeVector& x)
 {
   tubex::Function f("x1", "x2" ,"(-x2;x1)");
+  ibex::Function f1("x1", "x2" ,"(-x2;x1)");
 
   CtcPicard ctc_picard;
   ctc_picard.preserve_slicing(false);
   if (x.volume() > 5000)
     ctc_picard.contract(f, x, FORWARD);
-
+  /*  
   CtcDeriv ctc_deriv;
   ctc_deriv.set_fast_mode(true);
   ctc_deriv.contract(x, f.eval_vector(x), FORWARD | BACKWARD);
+  */
+    CtcCidSlicing ctc_cidslicing (f1);
+   TubeVector v = f.eval_vector(x);
+   ctc_cidslicing.contract(x,v,FORWARD,false);
+   ctc_cidslicing.contract(x,v,BACKWARD,false);
+  
 }
 
 int main()
@@ -55,10 +62,11 @@ int main()
       //      TubeVector x(domain, 0.1, 2);
       x.set(v,t0 ); // initial condition
       tubex::Solver solver(epsilon);
-      solver.set_refining_fxpt_ratio(0.9);
+      solver.set_refining_fxpt_ratio(2.);
     //solver.set_refining_fxpt_ratio(0.9999);
-      solver.set_propa_fxpt_ratio(0.999);
-      //solver.set_cid_fxpt_ratio(0.99);
+      solver.set_propa_fxpt_ratio(0.99);
+
+      //      solver.set_cid_fxpt_ratio(0.99);
       solver.set_cid_fxpt_ratio(0.);
       solver.set_cid_propa_fxpt_ratio(0.9);
       solver.set_max_slices(20000);

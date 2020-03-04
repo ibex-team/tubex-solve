@@ -26,17 +26,18 @@ void contract(TubeVector& x)
   ctc_picard.preserve_slicing(false);
    if (x.volume()> 500.0) 
      ctc_picard.contract(f, x, BACKWARD);
-   
+  
    //  cout << " after picard " << x << endl;
    //   cout << " volume " << x.volume()  << endl;
-   
+    
+  
   CtcDeriv ctc_deriv;
   ctc_deriv.set_fast_mode(true);
   ctc_deriv.preserve_slicing(false);
   ctc_deriv.contract(x, f.eval_vector(x),FORWARD | BACKWARD);
-   
+  
   //CtcCidSlicing ctc_cidslicing (f1,8,1.e-4);
-   /*  
+   /*
     CtcCidSlicing ctc_cidslicing (f1);
    TubeVector v = f.eval_vector(x);
 
@@ -81,12 +82,12 @@ int main()
       //      solver.set_propa_fxpt_ratio(0.9999);
       solver.set_propa_fxpt_ratio(0.99);
 
-      solver.set_cid_fxpt_ratio(0.);
+      solver.set_cid_fxpt_ratio(0.99);
       //      solver.set_cid_fxpt_ratio(0.99999);
       solver.set_cid_propa_fxpt_ratio(0.9999);
       solver.set_cid_timept(-1);
       solver.set_trace(1);
-      solver.set_max_slices(2000);
+      solver.set_max_slices(10000);
       solver.set_refining_mode(0);
       solver.set_bisection_timept(-1);
       //    solver.figure()->add_trajectoryvector(&truth, "truth");

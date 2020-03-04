@@ -119,9 +119,14 @@ namespace tubex
 	vector<double> t_refining;
 	for (const Slice*s= x[0].first_slice(); s!=NULL; s=s->next_slice())
 	  t_refining.push_back(s->domain().mid());
-	
+	//	cout << " refining " << t_refining.size() << endl;
 	for (int k=0; k<t_refining.size(); k++)
 	  x.sample(t_refining[k]);
+	
+	//	cout << " x " << x[0]  << endl;
+	//	for (const Slice*s= x[0].first_slice(); s!=NULL; s=s->next_slice())
+	//	  cout<<  *s << endl;
+	//	cout << " last slice " << *(x[0].last_slice()) << endl;
       }
 	    
     else if (m_refining_mode== 2 || m_refining_mode== 3){
@@ -223,9 +228,9 @@ namespace tubex
       bool emptiness;
       double volume_before_refining;
       
-      //      cout << " x before propagation " << x  << endl;
+      //      cout << " before propagation " << x << endl;
       propagation(x, ctc_func, m_propa_fxpt_ratio);
-      //      cout << " x after propagation " << x  << endl;
+
       
       emptiness = x.is_empty();
       double volume_before_cid;
@@ -255,11 +260,9 @@ namespace tubex
 	    {
 	      //	      cout << " end refining " <<  volume_before_refining << " after  " << x.volume() << endl; 
 	      break;}
-	//cout << " nb_slices after refining step " << x[0].nb_slices() << endl;
+	//	cout << " nb_slices after refining step " << x[0].nb_slices() << endl;
 	// 2. Propagations up to the fixed point
-	//	cout << " volume before propagation " << x.volume() << endl;
 	propagation(x, ctc_func, m_propa_fxpt_ratio);
-	//	cout << " volume after propagation " << x.volume() << endl;
 	// 3.      
 	emptiness = x.is_empty();
 	double volume_before_cid;
@@ -627,7 +630,7 @@ the tube intersection */
     
     bool emptiness;
     double volume_before_ctc;
-    //    int nb_iter=0;
+    int nb_iter=0;
     do
     {
       volume_before_ctc = x.volume();
@@ -635,17 +638,17 @@ the tube intersection */
       ctc_func(x);
       //      cout << "volume after ctc " << x.volume() << endl;
       emptiness = x.is_empty();
-      //      nb_iter++;
+      nb_iter++;
     } 
     while(!emptiness
 	  //          && !stopping_condition_met(x)
          && !fixed_point_reached(volume_before_ctc, x.volume(), propa_fxpt_ratio));
-    //    cout << " nbiter " << nb_iter << endl;
+
   }
 
   void Solver::cid(TubeVector &x, void (*ctc_func)(TubeVector&))
   {
-    if(m_cid_fxpt_ratio == 0.)
+    if(m_cid_fxpt_ratio == 0. || x.volume() > 1.e300)
       return;
 
     double t_bisection;
