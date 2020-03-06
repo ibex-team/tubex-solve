@@ -32,9 +32,8 @@ void contract(TubeVector& x)
 
     ctc_cidslicing.contract(x,v,FORWARD,false);
     ctc_cidslicing.contract(x,v,BACKWARD,false);
-    
-   
   }
+   
 }
 
 int main()
@@ -77,3 +76,4 @@ int main()
       
     return 0;
 }
+

@@ -12,15 +12,27 @@ using namespace tubex;
 void contract(TubeVector& x)
 {
   tubex::Function f("x1", "x2" ,"(-x1-2*x2;-3*x1-2*x2)");
+  ibex::Function f1("x1", "x2" ,"(-x1-2*x2;-3*x1-2*x2)");
 
   CtcPicard ctc_picard;
   ctc_picard.preserve_slicing(false);
-  if (x.volume() > 50000.0)
+  if (x.volume() > 1.e100)
     ctc_picard.contract(f, x, FORWARD);
 
-  CtcDeriv ctc_deriv;
-  ctc_deriv.set_fast_mode(true);
-  ctc_deriv.contract(x, f.eval_vector(x), FORWARD | BACKWARD);
+  if (x.volume() < 1.e100){
+    /*    
+    CtcDeriv ctc_deriv;
+    ctc_deriv.set_fast_mode(true);
+    ctc_deriv.contract(x, f.eval_vector(x), FORWARD | BACKWARD);
+    */
+    
+    CtcCidSlicing ctc_cidslicing (f1);
+    TubeVector v = f.eval_vector(x);
+
+    ctc_cidslicing.contract(x,v,FORWARD,false);
+    ctc_cidslicing.contract(x,v,BACKWARD,false);
+    
+  }
 }
 
 int main()
@@ -35,7 +47,7 @@ int main()
     v[1]=Interval(3.9,4.1);
 
     double eps=100;  // no bisection
-    //    double eps=0.25;  
+    //    double eps=0.2;  
     double step=0.01;
     int nbsteps=100;
     for (int i=0; i< nbsteps; i++){
@@ -48,8 +60,6 @@ int main()
       x.set(v,t0 ); // initial condition
 
    
-   
-
   /* =========== SOLVER =========== */
 
     tubex::Solver solver(epsilon);
@@ -57,14 +67,14 @@ int main()
     solver.set_refining_fxpt_ratio(0.99999);
 
     solver.set_propa_fxpt_ratio(0.9999);
-    solver.set_refining_mode(2);
+    solver.set_refining_mode(0);
     
-    //    solver.set_cid_fxpt_ratio(0.999999);
-    solver.set_cid_fxpt_ratio(0.99);
+    //solver.set_cid_fxpt_ratio(0.999999);
+    solver.set_cid_fxpt_ratio(0.);
     solver.set_cid_propa_fxpt_ratio(0.9999);
     solver.set_cid_timept(1);
-    solver.set_trace(0);
-    solver.set_max_slices(10000);
+    solver.set_trace(1);
+    solver.set_max_slices(2000);
     solver.set_bisection_timept(0);
     
 

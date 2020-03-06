@@ -22,15 +22,25 @@ using namespace tubex;
 void contract(TubeVector& x)
 {
   tubex::Function f("x1", "x2" ,"(x2;x2/0.2)");
+  ibex::Function f1("x1", "x2" ,"(x2;x2/0.2)");
 
   CtcPicard ctc_picard;
   ctc_picard.preserve_slicing(false);
-  if (x.volume() > 50000.)
+  if (x.volume() > 1.e300)
     ctc_picard.contract(f, x, FORWARD | BACKWARD);
 
+  TubeVector v = f.eval_vector(x);
+  /*
   CtcDeriv ctc_deriv;
   ctc_deriv.set_fast_mode(true);
-  ctc_deriv.contract(x, f.eval_vector(x), FORWARD | BACKWARD);
+  ctc_deriv.contract(x, v, FORWARD | BACKWARD);
+  */
+
+  CtcCidSlicing ctc_cidslicing (f1);
+  ctc_cidslicing.contract(x,v,BACKWARD,false);
+  ctc_cidslicing.contract(x,v,FORWARD,false);
+  
+
 }
 
 int main()
@@ -51,7 +61,7 @@ int main()
     v[1]=Interval(-10.,10.);
     x.set(v,1.);
 
-    double eps=0.01;
+    double eps=0.02;
 
   /* =========== SOLVER =========== */
       Vector epsilon(2, eps);
@@ -59,17 +69,18 @@ int main()
 
       tubex::Solver solver(epsilon);
 
-      solver.set_refining_fxpt_ratio(0.9999);
+      //      solver.set_refining_fxpt_ratio(0.9999);
+      solver.set_refining_fxpt_ratio(2.0);
 
       solver.set_propa_fxpt_ratio(0.9999);
 
-      solver.set_cid_fxpt_ratio(0.999);
-      //solver.set_cid_fxpt_ratio(0.);
+      //      solver.set_cid_fxpt_ratio(0.999);
+      solver.set_cid_fxpt_ratio(0.);
       solver.set_cid_propa_fxpt_ratio(0.999);
       solver.set_cid_timept(0);
-      solver.set_bisection_timept(0);
+      solver.set_bisection_timept(2);
       solver.set_max_slices(20000);
-      solver.set_refining_mode(2);
+      solver.set_refining_mode(0);
       solver.set_trace(1);
       list<TubeVector> l_solutions = solver.solve(x, &contract);
       cout << "nb sol " << l_solutions.size() << endl;

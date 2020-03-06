@@ -3,22 +3,34 @@
 #include <iomanip>
 
 using namespace std;
- using namespace ibex;
+using namespace ibex;
 using namespace tubex;
 
 void contract(TubeVector& x)
 {
   tubex::Function f("x1", "x2" ,"(-x2+0.1*x1*(1-x1^2-x2^2);x1+0.1*x1*(1-x1^2-x2^2))");
-
+  ibex::Function f1("x1", "x2" ,"(-x2+0.1*x1*(1-x1^2-x2^2);x1+0.1*x1*(1-x1^2-x2^2))");
   CtcPicard ctc_picard;
   ctc_picard.preserve_slicing(false);
-  if (x.volume() > 50000.) 
+  if (x.volume() > 1.e100) 
     ctc_picard.contract(f, x, FORWARD);
 
+   if (x.volume() < 1.e100){
+     TubeVector v = f.eval_vector(x);
+     /*
+       CtcDeriv ctc_deriv;
+       ctc_deriv.set_fast_mode(true);
+       ctc_deriv.contract(x, v, FORWARD | BACKWARD);
+     */
+     CtcCidSlicing ctc_cidslicing (f1);
 
-  CtcDeriv ctc_deriv;
-  ctc_deriv.set_fast_mode(true);
-  ctc_deriv.contract(x, f.eval_vector(x), FORWARD | BACKWARD);
+     ctc_cidslicing.contract(x,v,FORWARD,false);
+     ctc_cidslicing.contract(x,v,BACKWARD,false);
+
+
+   }
+   
+
 }
 
 int main()
@@ -34,8 +46,8 @@ int main()
     double volume=0.0;
     double totaltime=0.0;
 
-    double step=0.05;
-    int nbsteps=100;
+    double step=5.0;
+    int nbsteps=1;
     for (int i=0; i< nbsteps; i++){
 
       Vector epsilon(2, 1.e100);
@@ -55,15 +67,17 @@ int main()
 
     tubex::Solver solver(epsilon);
 
-    solver.set_refining_fxpt_ratio(0.99999);
+    //    solver.set_refining_fxpt_ratio(0.99999);
+    solver.set_refining_fxpt_ratio(2.0);
 
     solver.set_propa_fxpt_ratio(0.9999);
 
+
+    solver.set_cid_fxpt_ratio(0.);
+    //    solver.set_cid_fxpt_ratio(0.9999);
     solver.set_cid_propa_fxpt_ratio(0.9999);
-    //    solver.set_cid_fxpt_ratio(0.);
-    solver.set_cid_fxpt_ratio(0.9999);
     solver.set_cid_timept(0);
-    solver.set_max_slices(2000);
+    solver.set_max_slices(40000);
     solver.set_refining_mode(2);
     solver.set_trace(1);
     solver.set_bisection_timept(0);
