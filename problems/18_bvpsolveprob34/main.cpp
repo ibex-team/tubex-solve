@@ -73,13 +73,14 @@ int main()
 
     tubex::Solver solver(epsilon);
 
-    solver.set_refining_fxpt_ratio(0.99999);
+    //    solver.set_refining_fxpt_ratio(0.99999);
+    solver.set_refining_fxpt_ratio(2.0);
     //      solver.set_refining_fxpt_ratio(0.99);
 
     solver.set_propa_fxpt_ratio(0.99999);
 
-    //solver.set_cid_fxpt_ratio(0.9999);
-    solver.set_cid_fxpt_ratio(0.);
+    solver.set_cid_fxpt_ratio(0.9999);
+    //solver.set_cid_fxpt_ratio(0.);
     solver.set_cid_propa_fxpt_ratio(0.9999);
     solver.set_cid_timept(0);
     solver.set_bisection_timept(2);

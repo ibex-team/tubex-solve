@@ -79,7 +79,6 @@ int main()
     
 
 
-
     list<TubeVector> l_solutions = solver.solve(x, &contract);
 
 

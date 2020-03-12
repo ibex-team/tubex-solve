@@ -64,7 +64,7 @@ int main()
     solver.set_cid_timept(0);
     solver.set_bisection_timept(2);
     solver.set_trace(1);
-    solver.set_max_slices(2000);
+    solver.set_max_slices(20000);
     solver.set_refining_mode(0);
     list<TubeVector> l_solutions = solver.solve(x, &contract);
     cout << "nb sol " << l_solutions.size() << endl;

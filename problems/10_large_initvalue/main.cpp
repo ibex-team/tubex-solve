@@ -28,7 +28,7 @@ void contract(TubeVector& x)
     ctc_picard.contract(f, x);
 
   if (x.volume() <  1.e100){
-    /*
+
   TubeVector v = f.eval_vector(x);
     
    CtcCidSlicing ctc_cidslicing (f1);
@@ -38,13 +38,13 @@ void contract(TubeVector& x)
    ctc_cidslicing.contract(x,v,FORWARD,false);
   
    ctc_cidslicing.contract(x,v,BACKWARD,false);
-    */
+   /*
 
 
   CtcDeriv ctc_deriv;
   ctc_deriv.preserve_slicing(false);
   ctc_deriv.contract(x, f.eval_vector(x));
-
+   */
   }
 }
 

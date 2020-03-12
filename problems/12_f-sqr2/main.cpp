@@ -60,7 +60,7 @@ int main()
       //    solver.set_propa_fxpt_ratio(1.);
     solver.set_propa_fxpt_ratio(0.999);
     //    solver.set_cid_fxpt_ratio(0.9);
-    solver.set_cid_fxpt_ratio(0.9);
+    solver.set_cid_fxpt_ratio(0.);
     solver.set_cid_propa_fxpt_ratio(0.999);
     solver.set_max_slices(100000);
       //solver.set_max_slices(500);

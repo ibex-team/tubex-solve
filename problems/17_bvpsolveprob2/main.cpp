@@ -29,16 +29,21 @@ void contract(TubeVector& x)
   if (x.volume() > 1.e300)
     ctc_picard.contract(f, x, FORWARD | BACKWARD);
 
+  
   TubeVector v = f.eval_vector(x);
   /*
   CtcDeriv ctc_deriv;
   ctc_deriv.set_fast_mode(true);
   ctc_deriv.contract(x, v, FORWARD | BACKWARD);
+  
+  v=f.eval_vector(x);
   */
-
   CtcCidSlicing ctc_cidslicing (f1);
-  ctc_cidslicing.contract(x,v,BACKWARD,false);
+  //  cout << " before " << x << endl;
   ctc_cidslicing.contract(x,v,FORWARD,false);
+  //  cout << " after " << x << endl;
+  ctc_cidslicing.contract(x,v,BACKWARD,false);
+
   
 
 }
@@ -64,25 +69,25 @@ int main()
     double eps=0.02;
 
   /* =========== SOLVER =========== */
-      Vector epsilon(2, eps);
+    Vector epsilon(2, eps);
 
 
-      tubex::Solver solver(epsilon);
+    tubex::Solver solver(epsilon);
 
-      //      solver.set_refining_fxpt_ratio(0.9999);
-      solver.set_refining_fxpt_ratio(2.0);
-
-      solver.set_propa_fxpt_ratio(0.9999);
-
-      //      solver.set_cid_fxpt_ratio(0.999);
-      solver.set_cid_fxpt_ratio(0.);
-      solver.set_cid_propa_fxpt_ratio(0.999);
-      solver.set_cid_timept(0);
-      solver.set_bisection_timept(2);
-      solver.set_max_slices(20000);
-      solver.set_refining_mode(0);
-      solver.set_trace(1);
-      list<TubeVector> l_solutions = solver.solve(x, &contract);
-      cout << "nb sol " << l_solutions.size() << endl;
-      return 0;
+    //      solver.set_refining_fxpt_ratio(0.9999);
+    solver.set_refining_fxpt_ratio(2.0);
+    solver.set_propa_fxpt_ratio(0.9999);
+    //    solver.set_propa_fxpt_ratio(0.1);
+    //solver.set_cid_fxpt_ratio(0.999);
+    solver.set_cid_fxpt_ratio(0.);
+    solver.set_cid_propa_fxpt_ratio(0.999);
+      
+    solver.set_cid_timept(2);
+    solver.set_bisection_timept(2);
+    solver.set_max_slices(20000);
+    solver.set_refining_mode(0);
+    solver.set_trace(1);
+    list<TubeVector> l_solutions = solver.solve(x, &contract);
+    cout << "nb sol " << l_solutions.size() << endl;
+    return 0;
 }

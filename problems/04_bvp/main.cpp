@@ -42,24 +42,33 @@ void contract(TubeVector& x)
 
     tubex::Function f("x", "x");
     ibex::Function f1("x", "x");
-
+    //    cout << " x before Picard " << x << x.volume() << endl;
+    //    cout << " first slice " << *(x[0].first_slice()) << endl;
     CtcPicard ctc_picard;
+    
     ctc_picard.preserve_slicing(true);
     if (x.volume() > 1.e100)
       ctc_picard.contract(f, x);
+
+    //    cout << " x after Picard " << x << x.volume() << endl;
+    //    cout << " first slice " << *(x[0].first_slice()) << endl;
+
     /*
     CtcDeriv ctc_deriv;
     ctc_deriv.preserve_slicing(false);
     ctc_deriv.set_fast_mode(true);
     ctc_deriv.contract(x, f.eval_vector(x));
+    
     */
-    cout << " x before " << x << x.volume() << endl;
+
+    
    CtcCidSlicing ctc_cidslicing (f1);
    TubeVector v = f.eval_vector(x);
    ctc_cidslicing.preserve_slicing(false);
    ctc_cidslicing.contract(x,v,FORWARD,false);
+
    ctc_cidslicing.contract(x,v,BACKWARD,false);
-   cout << " x after " << x << x.volume() << endl;
+
      
 }
 
@@ -69,9 +78,10 @@ int main()
 
     Tube::enable_syntheses(false);
     int n = 1;
-
+    
     Vector epsilon(n, 0.0005);
     Interval domain(0.,1.);
+    //    TubeVector x(domain, n, Interval (-1.e100,1.e100));
     TubeVector x(domain, n);
     TrajectoryVector truth1(domain, tubex::Function("exp(t)/sqrt(1+exp(2))"));
     TrajectoryVector truth2(domain, tubex::Function("-exp(t)/sqrt(1+exp(2))"));
@@ -82,6 +92,7 @@ int main()
     //    solver.set_refining_fxpt_ratio(0.9995);
     //    solver.set_refining_fxpt_ratio(0.9999);
     solver.set_refining_fxpt_ratio(2.0);
+    //    solver.set_refining_fxpt_ratio(0.9999);
     solver.set_propa_fxpt_ratio(0.999);
     //    solver.set_cid_fxpt_ratio(0.999);
     solver.set_cid_fxpt_ratio(0.);

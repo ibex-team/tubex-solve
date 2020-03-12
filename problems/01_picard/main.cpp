@@ -30,20 +30,19 @@ void contract(TubeVector& x)
    //  cout << " after picard " << x << endl;
    //   cout << " volume " << x.volume()  << endl;
     
-  
+   /*  
   CtcDeriv ctc_deriv;
   ctc_deriv.set_fast_mode(true);
   ctc_deriv.preserve_slicing(false);
   ctc_deriv.contract(x, f.eval_vector(x),FORWARD | BACKWARD);
-  
-  //CtcCidSlicing ctc_cidslicing (f1,8,1.e-4);
-   /*
+   */
+   
     CtcCidSlicing ctc_cidslicing (f1);
    TubeVector v = f.eval_vector(x);
 
    ctc_cidslicing.contract(x,v,BACKWARD,false);
    ctc_cidslicing.contract(x,v,FORWARD,false);
-   */
+   
   //  cout << " after ctc deriv " << x.volume()  << endl;
 
 }

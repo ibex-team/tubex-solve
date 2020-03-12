@@ -136,12 +136,23 @@ namespace tubex
       vector<double>  slice_step;
 
       double step_threshold = refining_threshold(x, slice_step, t_refining);
-
-	for (int k=0; k<t_refining.size(); k++)
+      //      cout << " step threshold " << step_threshold << endl;
+      
+      int nb_refinements=0;
+      for (int k=0; k<t_refining.size(); k++){
+	if (slice_step[k] >= step_threshold)
+	  nb_refinements++;
+      }
+      //      cout << " nb_refinements " << nb_refinements << endl;
+      if (nb_refinements <= t_refining.size()/20)  // patch for pathological cases -> all slices are refined
+	step_threshold=0;
+      for (int k=0; k<t_refining.size(); k++){
+	//       	cout << "refining " << t_refining[k] << " " << slice_step[k] << endl;
 	  if (slice_step[k] >= step_threshold)
-	    { //cout << "refining " << t_refining[k] << endl;
+	    {//cout << "refining+ " << t_refining[k] << endl;
 	    x.sample(t_refining[k]);
 	    }
+      }
       }
     return true;
   }
@@ -163,13 +174,13 @@ namespace tubex
 
 
 	  for (int k=1; k< x.size(); k++){
-	    // cout << " step " << k << " " << fabs(s[k]->output_gate().mid() - s[k]->input_gate().mid()) << endl;
+	    //	    cout << " step k " << k << " " << fabs(s[k]->output_gate().mid() - s[k]->input_gate().mid()) << endl;
 	    step_max=std::max(step_max,fabs(s[k]->output_gate().mid() - s[k]->input_gate().mid()));
-	    //cout << " step_max " << k << "  " << step_max << endl;
+	    //	    cout << " step_max " << k << "  " << step_max << endl;
 	    s[k]=s[k]->next_slice();
 
 	  }
-	  // cout << "step_max " << step_max << endl;
+	  //	  cout << "step_max " << step_max << endl;
 	  slice_step.push_back(step_max);
 	  if (m_refining_mode==3) stepmed.push_back(step_max); // storage for computing the median	    
 	  if (m_refining_mode==2)
@@ -179,13 +190,13 @@ namespace tubex
 		step_threshold=(step_threshold*(nbsteps-1)+step_max)/nbsteps;
 	      }
 	  
-	  //  cout << "step_avg  " << slice_step_avg << endl;
+	  //	  cout << "step_threshold  " << step_threshold << endl;
 	}
 	if (m_refining_mode==3){
 	  sort(stepmed.begin(),stepmed.end());
 	  step_threshold =stepmed[stepmed.size()/2];
 	}
-	//	cout << " step_threshold " << step_threshold << endl;
+	//       	cout << " step_threshold " << step_threshold << endl;
 	//	cout << " step_max " << stepmed[stepmed.size()-1] << endl;
 	return step_threshold;
   }
@@ -258,9 +269,9 @@ namespace tubex
 	if(m_refining_fxpt_ratio != 0.)
 	  if (! refining(x))
 	    {
-	      //	      cout << " end refining " <<  volume_before_refining << " after  " << x.volume() << endl; 
+	      cout << " end refining " <<  volume_before_refining << " after  " << x.volume() << endl; 
 	      break;}
-	//	cout << " nb_slices after refining step " << x[0].nb_slices() << endl;
+	cout << " nb_slices after refining step " << x[0].nb_slices() << endl;
 	// 2. Propagations up to the fixed point
 	propagation(x, ctc_func, m_propa_fxpt_ratio);
 	// 3.      
@@ -277,7 +288,7 @@ namespace tubex
 	  while(!emptiness  
 		&& !fixed_point_reached(volume_before_cid, x.volume(), m_cid_fxpt_ratio));
 	  }
-	//	cout << " volume after refining " <<  x.volume() << endl;
+	cout << " volume after refining " <<  x.volume() << endl;
       }
       
       while(!emptiness
@@ -347,7 +358,6 @@ namespace tubex
 
 
 	    cout << " t_bisection " << t_bisection << " x volume " << x.volume() << " nb_slices " << x.nb_slices() << endl;
-	    //	    cout << "tube vector " << x << endl;
              
      	  }
     	}
