@@ -26,12 +26,22 @@ void contract(TubeVector& x)
     ctc_deriv.set_fast_mode(true);
     ctc_deriv.contract(x, f.eval_vector(x), FORWARD | BACKWARD);
     */
+
+    TubeVector v = f.eval_vector(x);
+    CtcDynCid* ctc_dyncid = new CtcDynCid(f1);     //f2 the function
+    ctc_dyncid->set_fast_mode(true);
+    CtcIntegration ctc_integration(f1,ctc_dyncid);
+    ctc_integration.contract(x,v,x[0].domain().lb(),FORWARD) ;
+    ctc_integration.contract(x,v,x[0].domain().ub(),BACKWARD) ;
+    delete ctc_dyncid;
+    /*
     
     CtcCidSlicing ctc_cidslicing (f1);
-    TubeVector v = f.eval_vector(x);
+
 
     ctc_cidslicing.contract(x,v,FORWARD,false);
     ctc_cidslicing.contract(x,v,BACKWARD,false);
+    */
   }
    
 }

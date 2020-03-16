@@ -100,7 +100,8 @@ namespace tubex
 
   bool Solver::refining(TubeVector& x)
   { // no refining if max_slices is already reached
-    if (x[0].nb_slices() > m_max_slices)
+    int nb_slices=x[0].nb_slices();
+    if (nb_slices >= m_max_slices)
       return false;
 
     //    cout << " volume before refining " << x.volume() << endl;
@@ -120,9 +121,11 @@ namespace tubex
 	for (const Slice*s= x[0].first_slice(); s!=NULL; s=s->next_slice())
 	  t_refining.push_back(s->domain().mid());
 	//	cout << " refining " << t_refining.size() << endl;
-	for (int k=0; k<t_refining.size(); k++)
+
+	for (int k=0; k<t_refining.size(); k++){
+	  if (k+nb_slices >= m_max_slices) break;
 	  x.sample(t_refining[k]);
-	
+	}
 	//	cout << " x " << x[0]  << endl;
 	//	for (const Slice*s= x[0].first_slice(); s!=NULL; s=s->next_slice())
 	//	  cout<<  *s << endl;
@@ -138,22 +141,21 @@ namespace tubex
       double step_threshold = refining_threshold(x, slice_step, t_refining);
       //      cout << " step threshold " << step_threshold << endl;
       
-      int nb_refinements=0;
-      for (int k=0; k<t_refining.size(); k++){
-	if (slice_step[k] >= step_threshold)
-	  nb_refinements++;
-      }
-      //      cout << " nb_refinements " << nb_refinements << endl;
-      if (nb_refinements <= t_refining.size()/20)  // patch for pathological cases -> all slices are refined
-	step_threshold=0;
+     
+      int new_slices=0;
       for (int k=0; k<t_refining.size(); k++){
 	//       	cout << "refining " << t_refining[k] << " " << slice_step[k] << endl;
-	  if (slice_step[k] >= step_threshold)
+	if( (nb_slices+ new_slices) >= m_max_slices) break;
+	if (slice_step[k] >= step_threshold)
 	    {//cout << "refining+ " << t_refining[k] << endl;
-	    x.sample(t_refining[k]);
+	      x.sample(t_refining[k]); new_slices++;
 	    }
       }
-      }
+      if (nb_slices < m_max_slices && x[0].nb_slices() == nb_slices)  // patch 
+	for (int k=0; k<t_refining.size(); k++){
+	  x.sample(t_refining[k]);
+	}
+    }
     return true;
   }
 
@@ -331,6 +333,14 @@ namespace tubex
 	      else
 		t_bisection=x[0].domain().ub();
 	    }
+	      else if  (m_bisection_timept==3){
+	      if (level%2)
+		t_bisection=x[0].domain().lb();
+	      else
+		t_bisection=x[0].domain().ub();
+	    }
+
+	 
 
 
 	    level++;
@@ -691,13 +701,13 @@ the tube intersection */
 	       x=p_x.second;
 	     else {x = p_x.second | branch_x ; break;}
 	     rate= m_cid_bisection_ratefactor*rate;
-
 	    }
 	  
 	  catch (Exception& )
 	    {break;}
-	  
+
 	}
+	propagation(x,ctc_func, m_propa_fxpt_ratio);
 	rate = 1 - m_cid_bisection_minrate;
        
 	while (rate > 1-m_cid_bisection_maxrate ){
@@ -712,7 +722,9 @@ the tube intersection */
 	  }
 	  catch (Exception& )
 	    {break;}
+
 	}
+	propagation(x,ctc_func, m_propa_fxpt_ratio);
       }
 
 

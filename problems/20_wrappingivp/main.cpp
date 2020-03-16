@@ -1,3 +1,10 @@
+/** 
+ *  tubex-lib - Examples
+ *  Solver testcase 20
+ *  \date       2020
+ *  \author     Bertrand Neveu
+ */
+
 #include "tubex.h"
 #include "tubex-solve.h"
 #include <iomanip>
@@ -17,15 +24,20 @@ void contract(TubeVector& x)
 
    if (x.volume() < 1.e100){
      TubeVector v = f.eval_vector(x);
-     /*
-       CtcDeriv ctc_deriv;
-       ctc_deriv.set_fast_mode(true);
-       ctc_deriv.contract(x, v, FORWARD | BACKWARD);
-     */
-     CtcCidSlicing ctc_cidslicing (f1);
 
-     ctc_cidslicing.contract(x,v,FORWARD,false);
-     ctc_cidslicing.contract(x,v,BACKWARD,false);
+     CtcDeriv ctc_deriv;
+     ctc_deriv.set_fast_mode(true);
+     ctc_deriv.contract(x, v, FORWARD | BACKWARD);
+     v=f.eval_vector(x);
+
+  
+  CtcDynCid* ctc_dyncid = new CtcDynCid(f1);     
+  ctc_dyncid->set_fast_mode(true);
+  CtcIntegration ctc_integration(f1,ctc_dyncid);
+  ctc_integration.contract(x,v,x[0].domain().lb(),FORWARD) ;
+  ctc_integration.contract(x,v,x[0].domain().ub(),BACKWARD) ;
+  delete ctc_dyncid;
+
 
 
    }
@@ -50,7 +62,7 @@ int main()
     int nbsteps=1;
     for (int i=0; i< nbsteps; i++){
 
-      Vector epsilon(2, 1.e100);
+      Vector epsilon(2, 0.01);
 
       double t0=i*step;
       if (t0>5) break;
@@ -76,7 +88,7 @@ int main()
     solver.set_cid_fxpt_ratio(0.);
     //    solver.set_cid_fxpt_ratio(0.9999);
     solver.set_cid_propa_fxpt_ratio(0.9999);
-    solver.set_cid_timept(0);
+    solver.set_cid_timept(1);
     solver.set_max_slices(40000);
     solver.set_refining_mode(2);
     solver.set_trace(1);

@@ -28,24 +28,26 @@ void contract(TubeVector& x)
   ctc_picard.preserve_slicing(false);
   if (x.volume() > 1.e300)
     ctc_picard.contract(f, x, FORWARD | BACKWARD);
-
   
   TubeVector v = f.eval_vector(x);
-  /*
+
   CtcDeriv ctc_deriv;
   ctc_deriv.set_fast_mode(true);
   ctc_deriv.contract(x, v, FORWARD | BACKWARD);
-  
+  /*
   v=f.eval_vector(x);
-  */
-  CtcCidSlicing ctc_cidslicing (f1);
-  //  cout << " before " << x << endl;
-  ctc_cidslicing.contract(x,v,FORWARD,false);
-  //  cout << " after " << x << endl;
-  ctc_cidslicing.contract(x,v,BACKWARD,false);
 
   
+  CtcDynCid* ctc_dyncid = new CtcDynCid(f1);     
+  ctc_dyncid->set_fast_mode(true);
+  CtcIntegration ctc_integration(f1,ctc_dyncid);
+  ctc_integration.contract(x,v,x[0].domain().lb(),FORWARD) ;
+  ctc_integration.contract(x,v,x[0].domain().ub(),BACKWARD) ;
+  delete ctc_dyncid;
+  */
 
+  
+  
 }
 
 int main()
@@ -78,14 +80,14 @@ int main()
     solver.set_refining_fxpt_ratio(2.0);
     solver.set_propa_fxpt_ratio(0.9999);
     //    solver.set_propa_fxpt_ratio(0.1);
-    //solver.set_cid_fxpt_ratio(0.999);
-    solver.set_cid_fxpt_ratio(0.);
+    solver.set_cid_fxpt_ratio(0.999);
+    //    solver.set_cid_fxpt_ratio(0.);
     solver.set_cid_propa_fxpt_ratio(0.999);
       
-    solver.set_cid_timept(2);
-    solver.set_bisection_timept(2);
+    solver.set_cid_timept(0);
+    solver.set_bisection_timept(3);
     solver.set_max_slices(20000);
-    solver.set_refining_mode(0);
+    solver.set_refining_mode(3);
     solver.set_trace(1);
     list<TubeVector> l_solutions = solver.solve(x, &contract);
     cout << "nb sol " << l_solutions.size() << endl;

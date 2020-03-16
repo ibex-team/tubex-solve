@@ -34,16 +34,16 @@ void contract(TubeVector& x)
     if (x.volume() < 1.e100){
     TubeVector v = f.eval_vector(x);
     
-    /*        
+
       CtcDeriv ctc_deriv;
       ctc_deriv.set_fast_mode(true);
       ctc_deriv.contract(x, v);
     
-    */
+      /*
     CtcCidSlicing ctc_cidslicing (f1);
     ctc_cidslicing.contract(x,v,FORWARD,false);
     ctc_cidslicing.contract(x,v,BACKWARD,false);
-
+      */
 
     }
 }
@@ -62,7 +62,6 @@ int main()
     IntervalVector x1(2);
     x0[0]=Interval(0.,0.);
     x0[1]=Interval(-1.e8,1.e8);
-    cout << " avant set " << endl;
     x.set(x0,0.);
     x1[0]=Interval(2.,2.);
     x1[1]=Interval(-1.e8,1.e8);
@@ -73,18 +72,19 @@ int main()
 
     tubex::Solver solver(epsilon);
     //    solver.set_refining_fxpt_ratio(0.9999);
-    //    solver.set_refining_fxpt_ratio(0.9995);
-    solver.set_refining_fxpt_ratio(2.0);
+    solver.set_refining_fxpt_ratio(0.9995);
+    // solver.set_refining_fxpt_ratio(2.0);
     solver.set_propa_fxpt_ratio(0.9999);
-    //solver.set_cid_fxpt_ratio(0.9999);
-    solver.set_cid_fxpt_ratio(0.);
+    solver.set_cid_fxpt_ratio(0.9999);
+    //    solver.set_cid_fxpt_ratio(0.);
     solver.set_cid_propa_fxpt_ratio(0.9999);
     solver.set_trace(1);
-    solver.set_cid_timept(2);
+    solver.set_cid_timept(0);
     solver.set_bisection_timept(2);
     solver.set_max_slices(20000);
 
-    solver.set_refining_mode(2);
+    solver.set_refining_mode(3);
+    //   srand(5);
     list<TubeVector> l_solutions = solver.solve(x, &contract);
 
     return (0);
