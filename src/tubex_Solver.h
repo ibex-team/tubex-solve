@@ -18,7 +18,7 @@
 #include "tubex_TubeVector.h"
 #include "tubex_TrajectoryVector.h"
 #include "tubex_VIBesFigTubeVector.h"
-//#include "ibex_BoolInterval.h"
+
 using namespace std;
 namespace tubex
 {
@@ -32,20 +32,20 @@ namespace tubex
       // Ratios used for stopping fixed point algorithms 
       void set_refining_fxpt_ratio(float refining_fxpt_ratio);
       void set_propa_fxpt_ratio(float propa_fxpt_ratio);
-      void set_cid_fxpt_ratio(float cid_fxpt_ratio);
-      void set_cid_propa_fxpt_ratio(float cid_propa_fxpt_ratio);
+      void set_var3b_fxpt_ratio(float var3b_fxpt_ratio);
+      void set_var3b_propa_fxpt_ratio(float var3b_propa_fxpt_ratio);
 
-      // Slice choice for cid
-      void set_cid_timept(int cid_timept); // where do the cid contraction : 1 domain.ub(); -1 domain.lb(); 0 max_diam_gate(); 2 randomly domain.ub() or domain.lb()
+      // Slice choice for var3b
+      void set_var3b_timept(int var3b_timept); // where do the var3b contraction : 1 domain.ub(); -1 domain.lb(); 0 max_diam_gate(); 2 randomly domain.ub() or domain.lb()
 
       // Slice choice for bisection
-      void set_bisection_timept (int bisection_timept); // where to bisect : 1 domain.ub(); -1 domain.lb(); 0 max_diam_gate; 2 randomly domain.ub() or domain.lb()
+      void set_bisection_timept (int bisection_timept); // where to bisect : 1 domain.ub(); -1 domain.lb(); 0 max_diam_gate(); 2 randomly domain.ub() or domain.lb(); 3 round robin  domain.ub() and domain.lb()
 
-      // no more refining when a number of slices greater than max_slices is already reached
+      // no more refining when  max_slices is  reached
       void set_max_slices(int max_slices); 
 
       // refining mode : which slices to refine
-      void set_refining_mode(int refining_mode); // 0 : all slices ; 1 : one slice ; 2 : the slices with a difference more than average
+      void set_refining_mode(int refining_mode); // 0 : all slices ; 1 : one slice ; 2 : the slices with a difference between input and output gates greater more than average ; 3 : the slices with with a difference between input and output gates greater more than the median.
 
       void set_trace(int trace);
       double solving_time;
@@ -62,21 +62,22 @@ namespace tubex
       bool stopping_condition_met(const TubeVector& x);
       bool fixed_point_reached(double volume_before, double volume_after, float fxpt_ratio);
       void propagation(TubeVector &x, void (*ctc_func)(TubeVector&), float propa_fxpt_ratio);
-      void cid(TubeVector &x, void (*ctc_func)(TubeVector&));
+      void var3b(TubeVector &x, void (*ctc_func)(TubeVector&));
       bool refining (TubeVector &x);
       double refining_threshold(const TubeVector &x, 
 				vector<double>& slice_step, vector<double>& t_refining);
+
       ibex::Vector m_max_thickness = ibex::Vector(1);
       float m_refining_fxpt_ratio = 0.005;
       float m_propa_fxpt_ratio = 0.005;
-      float m_cid_fxpt_ratio = 0.005;
-      float m_cid_propa_fxpt_ratio = 0.005;
-      /* Internal parameters for cid algorithm */
-      float m_cid_bisection_minrate = 0.0001;
-      float m_cid_bisection_maxrate = 0.4;
-      int m_cid_bisection_ratefactor=2;
+      float m_var3b_fxpt_ratio = 0.005;
+      float m_var3b_propa_fxpt_ratio = 0.005;
+      /* Internal parameters for var3b algorithm */
+      float m_var3b_bisection_minrate = 0.0001;
+      float m_var3b_bisection_maxrate = 0.4;
+      int m_var3b_bisection_ratefactor=2;
 
-      int m_cid_timept=0;
+      int m_var3b_timept=0;
       int m_bisection_timept=0;
       int m_trace=0;
       int m_max_slices=5000;

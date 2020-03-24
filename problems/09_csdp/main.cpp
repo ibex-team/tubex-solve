@@ -27,15 +27,22 @@ void contract(TubeVector& x)
   if (x.volume() > 50000.)
     ctc_picard.contract(f, x, FORWARD | BACKWARD);
   TubeVector v = f.eval_vector(x);
-  /*  
+  /*
   CtcDeriv ctc_deriv;
   ctc_deriv.preserve_slicing(false);
   ctc_deriv.contract(x, v, FORWARD | BACKWARD);
   */
+      
+  CtcDynCid* ctc_dyncid = new CtcDynCid(f1);     
+  //CtcDynCidGuess* ctc_dyncid = new CtcDynCidGuess(f1);     
+  ctc_dyncid->set_fast_mode(true);
+  CtcIntegration ctc_integration(f1,ctc_dyncid);
 
-  CtcCidSlicing ctc_cidslicing (f1);
-  ctc_cidslicing.contract(x,v,BACKWARD,false);
-  ctc_cidslicing.contract(x,v,FORWARD,false);
+  ctc_integration.contract(x,v,x[0].domain().lb(),FORWARD) ;
+
+  ctc_integration.contract(x,v,x[0].domain().ub(),BACKWARD) ;
+
+  delete ctc_dyncid;
   
   
   // Check if the following is useful:   seems useless (BN)
@@ -58,7 +65,7 @@ int main()
     
     //Vector epsilon(n); epsilon[0] = 0.15; epsilon[1] = 0.15;
     //    Vector epsilon(n); epsilon[0] = 0.03; epsilon[1] = 0.03;
-    Vector epsilon(n); epsilon[0] = 1.; epsilon[1] = 1.;
+    Vector epsilon(n); epsilon[0] = 0.04 ; epsilon[1] = 0.04;
 
     // Boundary condition:
     IntervalVector init = x(x.domain().lb());
@@ -75,19 +82,20 @@ int main()
 
     tubex::Solver solver(epsilon);
     //    solver.set_refining_fxpt_ratio(0.99999);
-    solver.set_refining_fxpt_ratio(0.999);
+    //    solver.set_refining_fxpt_ratio(0.999);
+    solver.set_refining_fxpt_ratio(2.0);
     solver.set_propa_fxpt_ratio(0.99999);
-    //    solver.set_cid_fxpt_ratio(0.99999);
-    //    solver.set_cid_fxpt_ratio(0.1);
-    solver.set_cid_fxpt_ratio(0.);
+    //    solver.set_var3b_fxpt_ratio(0.99999);
+    //solver.set_var3b_fxpt_ratio(0.1);
+    solver.set_var3b_fxpt_ratio(0.);
     
-    solver.set_cid_propa_fxpt_ratio(0.99999);
-    solver.set_cid_timept(2);
+    solver.set_var3b_propa_fxpt_ratio(0.99999);
+    solver.set_var3b_timept(2);
  
     solver.set_trace(1);
-    solver.set_max_slices(4000);
+    solver.set_max_slices(40000);
     solver.set_refining_mode(3);
-    solver.set_bisection_timept(2);
+    solver.set_bisection_timept(3);
     // Displaying the additional restriction:
     //    solver.figure()->draw_box(domain_restriction, max_restriction, "blue");
 

@@ -26,22 +26,17 @@ void contract(TubeVector& x)
     ctc_deriv.set_fast_mode(true);
     ctc_deriv.contract(x, f.eval_vector(x), FORWARD | BACKWARD);
     */
-
+    
     TubeVector v = f.eval_vector(x);
-    CtcDynCid* ctc_dyncid = new CtcDynCid(f1);     //f2 the function
+    //    CtcDynCid* ctc_dyncid = new CtcDynCid(f1);     //f2 the function
+    CtcDynCidGuess* ctc_dyncid = new CtcDynCidGuess(f1);     //f2 the function
     ctc_dyncid->set_fast_mode(true);
     CtcIntegration ctc_integration(f1,ctc_dyncid);
     ctc_integration.contract(x,v,x[0].domain().lb(),FORWARD) ;
     ctc_integration.contract(x,v,x[0].domain().ub(),BACKWARD) ;
     delete ctc_dyncid;
-    /*
     
-    CtcCidSlicing ctc_cidslicing (f1);
 
-
-    ctc_cidslicing.contract(x,v,FORWARD,false);
-    ctc_cidslicing.contract(x,v,BACKWARD,false);
-    */
   }
    
 }
@@ -58,7 +53,7 @@ int main()
     vector<IntervalVector*> gates; 
     v[0]=Interval(0.1,0.4);
     
-    Vector epsilon(1,1.0);
+    Vector epsilon(1,0.2);
 
 
     
@@ -69,12 +64,12 @@ int main()
       //    solver.set_refining_fxpt_ratio(0.98);
       //    solver.set_propa_fxpt_ratio(1.);
     solver.set_propa_fxpt_ratio(0.999);
-    //    solver.set_cid_fxpt_ratio(0.9);
-    solver.set_cid_fxpt_ratio(0.);
-    solver.set_cid_propa_fxpt_ratio(0.999);
+    //    solver.set_var3b_fxpt_ratio(0.9);
+    solver.set_var3b_fxpt_ratio(0.);
+    solver.set_var3b_propa_fxpt_ratio(0.999);
     solver.set_max_slices(100000);
       //solver.set_max_slices(500);
-    solver.set_cid_timept(1);
+    solver.set_var3b_timept(1);
     solver.set_trace(1);
     solver.set_refining_mode(0);
     solver.set_bisection_timept(-1);

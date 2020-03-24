@@ -30,21 +30,24 @@ void contract(TubeVector& x)
   if (x.volume() <  1.e100){
 
   TubeVector v = f.eval_vector(x);
-    
-   CtcCidSlicing ctc_cidslicing (f1);
-   
-
-   ctc_cidslicing.preserve_slicing(false);
-   ctc_cidslicing.contract(x,v,FORWARD,false);
+    CtcDynCid* ctc_dyncid = new CtcDynCid(f1);     
+    //ctc_dyncid->set_fast_mode(true);
+  CtcIntegration ctc_integration(f1,ctc_dyncid);
+  //  cout << "before contraction " << x << " volume " << x.volume();
+  ctc_integration.contract(x,v,x[0].domain().lb(),FORWARD) ;
+  //  cout << " after forward " <<  x << " volume " << x.volume() << endl;
+  ctc_integration.contract(x,v,x[0].domain().ub(),BACKWARD) ;
+  //  cout << x << " volume " << x.volume() << endl;
+  delete ctc_dyncid;
   
-   ctc_cidslicing.contract(x,v,BACKWARD,false);
-   /*
+
 
 
   CtcDeriv ctc_deriv;
   ctc_deriv.preserve_slicing(false);
+  ctc_deriv.set_fast_mode(true);
   ctc_deriv.contract(x, f.eval_vector(x));
-   */
+   
   }
 }
 
@@ -55,7 +58,7 @@ int main()
     Tube::enable_syntheses(false);
     int n = 1;
     //    Vector epsilon(n, 0.1);
-    Vector epsilon(n, 10.);
+    Vector epsilon(n, 0.3);
     Interval domain(0.,1.);
     TubeVector x(domain,0.1, n);
     x.set(IntervalVector(n, Interval(0.5,1.)*exp(Interval(-0.))), 0.); // initial condition
@@ -69,11 +72,11 @@ int main()
     solver.set_refining_fxpt_ratio(2.0);
     //    solver.set_propa_fxpt_ratio(0.9999);
     solver.set_propa_fxpt_ratio(0.9999);
-    //    solver.set_cid_fxpt_ratio(0.9);
-    solver.set_cid_fxpt_ratio(0.);
+    //    solver.set_var3b_fxpt_ratio(0.9);
+    solver.set_var3b_fxpt_ratio(0.);
 
-    solver.set_cid_propa_fxpt_ratio(0.999);
-    solver.set_cid_timept(1);
+    solver.set_var3b_propa_fxpt_ratio(0.9999);
+    solver.set_var3b_timept(1);
     solver.set_trace(1);
     solver.set_max_slices(10000);
     solver.set_refining_mode(3);

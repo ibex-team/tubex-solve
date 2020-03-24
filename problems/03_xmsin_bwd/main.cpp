@@ -27,19 +27,27 @@ void contract(TubeVector& x)
   if (x.volume() > 5000.0)
     ctc_picard.contract(f, x,  BACKWARD);
   
-  /*  
+
   CtcDeriv ctc_deriv;
   ctc_deriv.set_fast_mode(true);
   ctc_deriv.preserve_slicing(false);
   ctc_deriv.contract(x, f.eval_vector(x),FORWARD | BACKWARD);
   
-  */ 
-    CtcCidSlicing ctc_cidslicing (f1);
-    TubeVector v = f.eval_vector(x);
 
-    ctc_cidslicing.contract(x,v,BACKWARD,false);
-    ctc_cidslicing.contract(x,v,FORWARD,false);
+  /*   
+       TubeVector v = f.eval_vector(x);
+
+    
+  CtcDynCid* ctc_dyncid = new CtcDynCid(f1);     
+  ctc_dyncid->set_fast_mode(true);
+  CtcIntegration ctc_integration(f1,ctc_dyncid);
   
+  ctc_integration.contract(x,v,x[0].domain().lb(),FORWARD) ;
+  
+  ctc_integration.contract(x,v,x[0].domain().ub(),BACKWARD) ;
+  
+  delete ctc_dyncid;
+  */
 }
 
 int main()
@@ -47,7 +55,7 @@ int main()
   /* =========== PARAMETERS =========== */
 
     Tube::enable_syntheses(false);
-    Vector epsilon(1,0.1);
+    Vector epsilon(1,0.005);
     double tf=10.;
 
     vector<IntervalVector*> gates; 
@@ -73,14 +81,15 @@ int main()
       x.set(v,t1 ); // final condition at t1
 
       tubex::Solver solver(epsilon);
-      solver.set_refining_fxpt_ratio(0.999);
+      //      solver.set_refining_fxpt_ratio(0.999);
+      solver.set_refining_fxpt_ratio(2.0);
       solver.set_propa_fxpt_ratio(0.999);
-      //      solver.set_cid_fxpt_ratio(0.999);
-      solver.set_cid_fxpt_ratio(0.);
-      solver.set_cid_propa_fxpt_ratio(0.999);
-      solver.set_cid_timept(-1);
+      solver.set_var3b_fxpt_ratio(0.999);
+      //solver.set_var3b_fxpt_ratio(0.);
+      solver.set_var3b_propa_fxpt_ratio(0.999);
+      solver.set_var3b_timept(-1);
       solver.set_refining_mode(0);
-      solver.set_max_slices(20000);
+      solver.set_max_slices(40000);
       solver.set_trace(1);
       //    solver.figure()->add_trajectoryvector(&truth, "truth");
       list<TubeVector> l_solutions = solver.solve(x, &contract);

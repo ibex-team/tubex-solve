@@ -31,19 +31,28 @@ void contract(TubeVector& x)
   if (x.volume() > 5000)
     ctc_picard.contract(f, x, FORWARD );
 
-  CtcCidSlicing ctc_cidslicing (f1);
+  /*
   TubeVector v = f.eval_vector(x);
+  CtcDynCid* ctc_dyncid = new CtcDynCid(f1);     
+  ctc_dyncid->set_fast_mode(true);
+  CtcIntegration ctc_integration(f1,ctc_dyncid);
+  
+  ctc_integration.contract(x,v,x[0].domain().lb(),FORWARD) ;
+  
+  ctc_integration.contract(x,v,x[0].domain().ub(),BACKWARD) ;
+  
+  delete ctc_dyncid;
 
+  */
 
-  ctc_cidslicing.contract(x,v,FORWARD,false);
-  ctc_cidslicing.contract(x,v,BACKWARD,false);
+  
 
-  /*  
+    
   CtcDeriv ctc_deriv;
   ctc_deriv.preserve_slicing(false);
   ctc_deriv.set_fast_mode(true);
   ctc_deriv.contract(x, f.eval_vector(x), FORWARD |  BACKWARD );
-  */
+  
 }
 
 int main()
@@ -51,7 +60,7 @@ int main()
   /* =========== PARAMETERS =========== */
 
     Tube::enable_syntheses(false);
-    Vector epsilon(1, 1); 
+    Vector epsilon(1,0.002); 
     double tf=10.;
     IntervalVector v(1);
     
@@ -76,12 +85,12 @@ int main()
 
     tubex::Solver solver(epsilon);
     solver.set_refining_fxpt_ratio(0.99999);
-    //    solver.set_propa_fxpt_ratio(0.999);
-    solver.set_cid_fxpt_ratio(0.);
-    solver.set_cid_fxpt_ratio(0.9999);
-    solver.set_cid_propa_fxpt_ratio(0.9999);
-    solver.set_cid_timept(1);
-    solver.set_max_slices(4000);
+    solver.set_propa_fxpt_ratio(0.999);
+    //    solver.set_var3b_fxpt_ratio(0.);
+    solver.set_var3b_fxpt_ratio(0.9999);
+    solver.set_var3b_propa_fxpt_ratio(0.999);
+    solver.set_var3b_timept(1);
+    solver.set_max_slices(50000);
     solver.set_refining_mode(0);
     solver.set_trace(1);
     //    solver.figure()->add_trajectoryvector(&truth, "truth");

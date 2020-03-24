@@ -58,10 +58,10 @@ int main()
 
     solver.set_propa_fxpt_ratio(0.9999);
 
-    solver.set_cid_propa_fxpt_ratio(0.999);
-    //    solver.set_cid_fxpt_ratio(0.);
-    solver.set_cid_fxpt_ratio(0.9999);
-    solver.set_cid_timept(0);
+    solver.set_var3b_propa_fxpt_ratio(0.999);
+    //    solver.set_var3b_fxpt_ratio(0.);
+    solver.set_var3b_fxpt_ratio(0.9999);
+    solver.set_var3b_timept(0);
     solver.set_max_slices(5000);
     solver.set_refining_mode(2);
     solver.set_trace(1);

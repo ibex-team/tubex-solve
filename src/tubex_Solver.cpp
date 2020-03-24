@@ -56,21 +56,21 @@ namespace tubex
     m_propa_fxpt_ratio = propa_fxpt_ratio;
   }
 
-  void Solver::set_cid_fxpt_ratio(float cid_fxpt_ratio)
+  void Solver::set_var3b_fxpt_ratio(float var3b_fxpt_ratio)
   {
-    assert(Interval(0.,1.).contains(cid_fxpt_ratio));
-    m_cid_fxpt_ratio = cid_fxpt_ratio;
+    assert(Interval(0.,1.).contains(var3b_fxpt_ratio));
+    m_var3b_fxpt_ratio = var3b_fxpt_ratio;
   }
 
-   void Solver::set_cid_propa_fxpt_ratio(float cid_propa_fxpt_ratio)
+   void Solver::set_var3b_propa_fxpt_ratio(float var3b_propa_fxpt_ratio)
   {
-    assert(Interval(0.,1.).contains(cid_propa_fxpt_ratio));
-    m_cid_propa_fxpt_ratio = cid_propa_fxpt_ratio;
+    assert(Interval(0.,1.).contains(var3b_propa_fxpt_ratio));
+    m_var3b_propa_fxpt_ratio = var3b_propa_fxpt_ratio;
   }
 
-  void Solver::set_cid_timept(int cid_timept)
+  void Solver::set_var3b_timept(int var3b_timept)
   {
-    m_cid_timept = cid_timept;
+    m_var3b_timept = var3b_timept;
   }
 
   void Solver::set_bisection_timept(int bisection_timept)
@@ -118,19 +118,18 @@ namespace tubex
       { // all slices are refined 
 	
 	vector<double> t_refining;
-	for (const Slice*s= x[0].first_slice(); s!=NULL; s=s->next_slice())
+
+	for (const Slice*s= x[0].first_slice(); s!=NULL; s=s->next_slice()){
 	  t_refining.push_back(s->domain().mid());
+
+	}
 	//	cout << " refining " << t_refining.size() << endl;
 
 	for (int k=0; k<t_refining.size(); k++){
 	  if (k+nb_slices >= m_max_slices) break;
 	  x.sample(t_refining[k]);
 	}
-	//	cout << " x " << x[0]  << endl;
-	//	for (const Slice*s= x[0].first_slice(); s!=NULL; s=s->next_slice())
-	//	  cout<<  *s << endl;
-	//	cout << " last slice " << *(x[0].last_slice()) << endl;
-      }
+  }
 	    
     else if (m_refining_mode== 2 || m_refining_mode== 3){
       // the refining is focused on "slices " with a larger than average (or median) max difference (in all dimensions)  between input and output gates
@@ -140,7 +139,6 @@ namespace tubex
 
       double step_threshold = refining_threshold(x, slice_step, t_refining);
       //      cout << " step threshold " << step_threshold << endl;
-      
      
       int new_slices=0;
       for (int k=0; k<t_refining.size(); k++){
@@ -151,13 +149,16 @@ namespace tubex
 	      x.sample(t_refining[k]); new_slices++;
 	    }
       }
-      if (nb_slices < m_max_slices && x[0].nb_slices() == nb_slices)  // patch 
+      if (nb_slices < m_max_slices && x[0].nb_slices() == nb_slices)  // patch to avoid infinite loops (the selected slices could not be bisected)
 	for (int k=0; k<t_refining.size(); k++){
 	  x.sample(t_refining[k]);
+          nb_slices++;
+	  if (nb_slices >= m_max_slices) break;
 	}
     }
     return true;
   }
+
 
   double Solver::refining_threshold(const TubeVector &x, vector<double> & slice_step, vector<double>& t_refining) {
         int nbsteps=0;
@@ -184,9 +185,9 @@ namespace tubex
 	  }
 	  //	  cout << "step_max " << step_max << endl;
 	  slice_step.push_back(step_max);
-	  if (m_refining_mode==3) stepmed.push_back(step_max); // storage for computing the median	    
+	  if (m_refining_mode==3) stepmed.push_back(step_max); // storage for computing the median value
 	  if (m_refining_mode==2)
-	    if (step_max < 1.e300)  // to not take into account infinite gates in average computation
+	    if (step_max < DBL_MAX)  // to not take into account infinite gates in average computation
 	      {
 		nbsteps++;
 		step_threshold=(step_threshold*(nbsteps-1)+step_max)/nbsteps;
@@ -202,7 +203,6 @@ namespace tubex
 	//	cout << " step_max " << stepmed[stepmed.size()-1] << endl;
 	return step_threshold;
   }
-
 
 
   const list<TubeVector> Solver::solve(const TubeVector& x0, void (*ctc_func)(TubeVector&))
@@ -241,22 +241,22 @@ namespace tubex
       bool emptiness;
       double volume_before_refining;
       
-      //      cout << " before propagation " << x << endl;
+      // cout << " before propagation " << x << endl;
       propagation(x, ctc_func, m_propa_fxpt_ratio);
-
+      // cout << " after propagation " << x << endl;
       
       emptiness = x.is_empty();
-      double volume_before_cid;
-      if (!emptiness && m_cid_fxpt_ratio){
+      double volume_before_var3b;
+      if (!emptiness && m_var3b_fxpt_ratio){
 	do
 	  { 
-	    // cout << " volume before cid "  << x.volume() << endl;
-	    cid(x, ctc_func);
-	    // cout << " volume after cid "  << x.volume() << endl;
+	    // cout << " volume before var3b "  << x.volume() << endl;
+	    var3b(x, ctc_func);
+	    // cout << " volume after var3b "  << x.volume() << endl;
 	    emptiness = x.is_empty();
 	  }
 	while(!emptiness  
-	      && !fixed_point_reached(volume_before_cid, x.volume(), m_cid_fxpt_ratio));
+	      && !fixed_point_reached(volume_before_var3b, x.volume(), m_var3b_fxpt_ratio));
       }
 
       
@@ -265,7 +265,7 @@ namespace tubex
 	do
       {
         volume_before_refining = x.volume();
-	//	cout << " volume before refining " <<  volume_before_refining << endl;
+	//  cout << " volume before refining " <<  volume_before_refining << endl;
         // 1. Refining
 
 	if(m_refining_fxpt_ratio != 0.)
@@ -278,23 +278,23 @@ namespace tubex
 	propagation(x, ctc_func, m_propa_fxpt_ratio);
 	// 3.      
 	emptiness = x.is_empty();
-	double volume_before_cid;
-	if (!emptiness && m_cid_fxpt_ratio){
+	double volume_before_var3b;
+	if (!emptiness && m_var3b_fxpt_ratio){
 	  do
 	    { 
-	      // cout << " volume before cid "  << x.volume() << endl;
-	      cid(x, ctc_func);
-	      // cout << " volume after cid "  << x.volume() << endl;
+	      // cout << " volume before var3b "  << x.volume() << endl;
+	      var3b(x, ctc_func);
+	      // cout << " volume after var3b "  << x.volume() << endl;
 	      emptiness = x.is_empty();
 	    }
 	  while(!emptiness  
-		&& !fixed_point_reached(volume_before_cid, x.volume(), m_cid_fxpt_ratio));
+		&& !fixed_point_reached(volume_before_var3b, x.volume(), m_var3b_fxpt_ratio));
 	  }
 	cout << " volume after refining " <<  x.volume() << endl;
       }
       
       while(!emptiness
-	    //	    && !stopping_condition_met(x)
+	    && !stopping_condition_met(x)
 	    && ( x.volume() >= DBL_MAX  || !fixed_point_reached(volume_before_refining, x.volume(), m_refining_fxpt_ratio)));
 
       // 4. Bisection
@@ -356,6 +356,7 @@ namespace tubex
 	    }
 	    catch (Exception &)   // when the bisection time was not bisectable, change to largest_slice
 	      {	 
+		
                 t_bisection=x.largest_slice()->domain().mid();
 	        pair<TubeVector,TubeVector> p_x = x.bisect(t_bisection);
 
@@ -472,7 +473,7 @@ namespace tubex
       int nn1=0;
       for(it2 = l_clustered.begin(); it2 != l_clustered.end(); ++it2) {
 		if(!((*it1 & *it2).is_empty()))
-	//		if (! empty_intersection(*it1,*it2))
+	//	if (! empty_intersection(*it1,*it2)) // TO DO : test this algo 
 	  {
 	    *it2 = (*it1 | *it2);
 	    clustering = true;
@@ -484,8 +485,8 @@ namespace tubex
 	  nn1++;
       }
       if(!clustering){
-	if (m_trace) cout << "new cluster tube " << nn+1 << endl;
-	cout << ", ti↦" << (*it1)(it1->domain().lb()) << endl;
+	if (m_trace) {cout << "new cluster tube " << nn+1 << endl;
+	  cout << ", ti↦" << (*it1)(it1->domain().lb()) << endl;}
 	l_clustered.push_back(*it1);
       }
       nn++;
@@ -493,8 +494,7 @@ namespace tubex
     l_tubes = l_clustered;
   }
 
-  /*   more efficient algorithm in case of tubes with different slicings : no need to compute
-the tube intersection */
+  /*   more efficient algorithm in case of tubes with different slicings : no need to compute  the tube intersection  TODO test this algorithm */
 
   bool Solver::empty_intersection( TubeVector & tubevector1, TubeVector & tubevector2)
   {
@@ -539,73 +539,6 @@ the tube intersection */
 
 
 	
-  /*
-  void Solver::clustering(list<TubeVector>& l_tubes)  {
-    //  assert(!l_tubes.empty());
-    list<TubeVector> l_clustered;
-    list<TubeVector>::iterator it1, it2;
-    int nn=0;
-    for(it1 = l_tubes.begin(); it1 != l_tubes.end(); ++it1) {
-      bool clustering = false;
-      //    cout << nn << " input gate before " << (*it1)[0].first_slice()->input_gate() << endl;
-      int nn1=0;
-      for(it2 = l_clustered.begin(); it2 != l_clustered.end(); ++it2) {
-	//      cout << "nn1 input gate " << nn1 << (*it2)[0].first_slice()->input_gate() << endl;
-
-
-	bool empty_intersection=false;
-
-        if (Tube::same_slicing((*it1)[0], (*it2)[0]))
-	  for (int k=0; k< it1->size() ; k++){
-	    if (!empty_intersection){
-	      Slice* s2=(*it2)[k].first_slice();
-
-	      for (const Slice*s= (*it1)[k].first_slice(); s!=NULL; s=s->next_slice()){
-		if ((s->input_gate() & s2->codomain()).is_empty())
-		  {empty_intersection=true; 
-		    //	    cout << " s1   " << *s << endl;
-		    //	    cout << " s2   " << *s2 << endl;
-		    break;}
-		s2=s2->next_slice();
-	      }
-	    }
-	  }
-
-	else
-	  for (int k=0; k< it1->size() ; k++){
-	    if (!empty_intersection)
-	      for (const Slice*s= (*it1)[k].first_slice(); s!=NULL; s=s->next_slice()){
-		if ((s->input_gate() & (*it2)[k].slice(s->domain().lb())->codomain()).is_empty())
-		  {empty_intersection=true; 
-		    break;}
-	      }
-	    
-	  }
-	if (!empty_intersection)
-	  //	if(!((*it1 & *it2).is_empty()))
-	  //if(!y.is_empty())
-	    {
-	      //	      *it2 = (*it1 | *it2);
-	      *it1 |= *it2;
-	      *it2= *it1;
-	      clustering = true;
-	      if (m_trace) cout << " tube " << nn+1 << " in cluster " << nn1+1 << endl;
-	      //	      cout << " nb_slices " << it2->nb_slices() << endl;
-	      //	      cout << ", ti↦" << (*it2)(it2->domain().lb()) << endl;
-	      break;
-	    }
-	  nn1++;
-      }
-      if(!clustering){
-	if (m_trace) cout << "new cluster tube " << nn+1 << endl;
-	cout << ", ti↦" << (*it1)(it1->domain().lb()) << endl;
-	l_clustered.push_back(*it1);
-      }
-      nn++;
-    }
-    l_tubes = l_clustered;
-  }
-  */
 	  
   VIBesFigTubeVector* Solver::figure()
   {
@@ -666,18 +599,18 @@ the tube intersection */
 
   }
 
-  void Solver::cid(TubeVector &x, void (*ctc_func)(TubeVector&))
+  void Solver::var3b(TubeVector &x, void (*ctc_func)(TubeVector&))
   {
-    if(m_cid_fxpt_ratio == 0. || x.volume() > 1.e300)
+    if(m_var3b_fxpt_ratio == 0. || x.volume() >= DBL_MAX)
       return;
 
     double t_bisection;
 
-    if (m_cid_timept==1)
+    if (m_var3b_timept==1)
       t_bisection=x[0].domain().ub();
-    else if (m_cid_timept==-1)
+    else if (m_var3b_timept==-1)
       t_bisection=x[0].domain().lb();
-    else  if (m_cid_timept==2){
+    else  if (m_var3b_timept==2){
       if (rand()%2)
 	t_bisection=x[0].domain().lb();
       else
@@ -685,22 +618,22 @@ the tube intersection */
     }
     else
       x.max_gate_diam(t_bisection);  
-    //    cout << " t_bisection cid " << t_bisection << endl;
+    //    cout << " t_bisection var3b " << t_bisection << endl;
     for(int k=0; k<x.size() ; k++)
       {
 
-	double rate=m_cid_bisection_minrate;
+	double rate=m_var3b_bisection_minrate;
 
-	while (rate < m_cid_bisection_maxrate){
+	while (rate < m_var3b_bisection_maxrate){
 	  try
 	    {pair<TubeVector,TubeVector> p_x = x.bisect(t_bisection,k,rate);
 
 	     TubeVector branch_x= p_x.first;
-	     propagation(branch_x, ctc_func, m_cid_propa_fxpt_ratio);
+	     propagation(branch_x, ctc_func, m_propa_fxpt_ratio);
 	     if (branch_x.is_empty())
 	       x=p_x.second;
 	     else {x = p_x.second | branch_x ; break;}
-	     rate= m_cid_bisection_ratefactor*rate;
+	     rate= m_var3b_bisection_ratefactor*rate;
 	    }
 	  
 	  catch (Exception& )
@@ -708,17 +641,17 @@ the tube intersection */
 
 	}
 	propagation(x,ctc_func, m_propa_fxpt_ratio);
-	rate = 1 - m_cid_bisection_minrate;
+	rate = 1 - m_var3b_bisection_minrate;
        
-	while (rate > 1-m_cid_bisection_maxrate ){
+	while (rate > 1-m_var3b_bisection_maxrate ){
 	  try{
 	    pair<TubeVector,TubeVector> p_x = x.bisect(t_bisection,k,rate);
 	     TubeVector branch_x= p_x.second;
-	     propagation(branch_x, ctc_func, m_cid_propa_fxpt_ratio);
+	     propagation(branch_x, ctc_func, m_propa_fxpt_ratio);
 	     if (branch_x.is_empty())
 	       x=p_x.first;
 	     else {x = p_x.first | branch_x ; break;}
-	     rate=1-m_cid_bisection_ratefactor*(1-rate);
+	     rate=1-m_var3b_bisection_ratefactor*(1-rate);
 	  }
 	  catch (Exception& )
 	    {break;}
@@ -728,9 +661,7 @@ the tube intersection */
       }
 
 
-
- 
-      }
+  }
 
 
 

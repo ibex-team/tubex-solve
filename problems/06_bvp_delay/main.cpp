@@ -108,7 +108,7 @@ int main()
     tubex::Solver solver(epsilon);
     solver.set_refining_fxpt_ratio(0.999);
     solver.set_propa_fxpt_ratio(0.999);
-    solver.set_cid_fxpt_ratio(0.);
+    solver.set_var3b_fxpt_ratio(0.);
     solver.figure()->add_trajectoryvector(&truth1, "truth1");
     solver.figure()->add_trajectoryvector(&truth2, "truth2");
     list<TubeVector> l_solutions = solver.solve(x, &contract);
