@@ -21,7 +21,7 @@ void contract(TubeVector& x)
 {
   tubex::Function f("x", "-x");
   ibex::Function f1("x", "-x");
-
+  
   CtcPicard ctc_picard;
   ctc_picard.preserve_slicing(false);
   if (x.volume() > 1.e100)
@@ -30,7 +30,7 @@ void contract(TubeVector& x)
   if (x.volume() <  1.e100){
 
   TubeVector v = f.eval_vector(x);
-    CtcDynCid* ctc_dyncid = new CtcDynCid(f1);     
+  CtcDynCid* ctc_dyncid = new CtcDynCid(f1);     
     //ctc_dyncid->set_fast_mode(true);
   CtcIntegration ctc_integration(f1,ctc_dyncid);
   //  cout << "before contraction " << x << " volume " << x.volume();
@@ -41,13 +41,13 @@ void contract(TubeVector& x)
   delete ctc_dyncid;
   
 
-
+  /*
 
   CtcDeriv ctc_deriv;
   ctc_deriv.preserve_slicing(false);
   ctc_deriv.set_fast_mode(true);
   ctc_deriv.contract(x, f.eval_vector(x));
-   
+  */
   }
 }
 

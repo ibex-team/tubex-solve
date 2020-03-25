@@ -20,11 +20,11 @@ void contract(TubeVector& x)
     ctc_picard.contract(f, x, FORWARD);
 
   if (x.volume() < 1.e100){
-    /*    
+   
     CtcDeriv ctc_deriv;
     ctc_deriv.set_fast_mode(true);
     ctc_deriv.contract(x, f.eval_vector(x), FORWARD | BACKWARD);
-    */
+    /*
     TubeVector v = f.eval_vector(x);
     CtcDynCid* ctc_dyncid = new CtcDynCid(f1);     
     ctc_dyncid->set_fast_mode(true);
@@ -35,7 +35,7 @@ void contract(TubeVector& x)
     ctc_integration.contract(x,v,x[0].domain().ub(),BACKWARD) ;
 
     delete ctc_dyncid;
-    
+    */
   }
 }
 
@@ -50,10 +50,10 @@ int main()
     v[0]=Interval(5.9,6.1);
     v[1]=Interval(3.9,4.1);
 
-    double eps=100;  // no bisection
-    //    double eps=0.2;  
-    double step=0.01;
-    int nbsteps=100;
+    //    double eps=100;  // no bisection
+    double eps=0.1;  
+    double step=1.;
+    int nbsteps=1;
     for (int i=0; i< nbsteps; i++){
       //   Vector epsilon(2, eps*(i+1));
       Vector epsilon(2, eps);
@@ -73,12 +73,12 @@ int main()
     solver.set_propa_fxpt_ratio(0.9999);
     solver.set_refining_mode(0);
     
-    //solver.set_var3b_fxpt_ratio(0.999999);
-    solver.set_var3b_fxpt_ratio(0.);
+    //    solver.set_var3b_fxpt_ratio(0.999999);
+     solver.set_var3b_fxpt_ratio(0.);
     solver.set_var3b_propa_fxpt_ratio(0.9999);
     solver.set_var3b_timept(1);
     solver.set_trace(1);
-    solver.set_max_slices(2000);
+    solver.set_max_slices(100000);
     solver.set_bisection_timept(0);
     
 

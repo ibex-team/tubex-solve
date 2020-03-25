@@ -28,11 +28,12 @@ void contract(TubeVector& x)
     */
     
     TubeVector v = f.eval_vector(x);
-    //    CtcDynCid* ctc_dyncid = new CtcDynCid(f1);     //f2 the function
-    CtcDynCidGuess* ctc_dyncid = new CtcDynCidGuess(f1);     //f2 the function
+    CtcDynCid* ctc_dyncid = new CtcDynCid(f1);     //f2 the function
+    //    CtcDynCidGuess* ctc_dyncid = new CtcDynCidGuess(f1);     //f2 the function
     ctc_dyncid->set_fast_mode(true);
     CtcIntegration ctc_integration(f1,ctc_dyncid);
     ctc_integration.contract(x,v,x[0].domain().lb(),FORWARD) ;
+    v = f.eval_vector(x);
     ctc_integration.contract(x,v,x[0].domain().ub(),BACKWARD) ;
     delete ctc_dyncid;
     

@@ -23,8 +23,8 @@ void contract(TubeVector& x)
   */
   
   TubeVector v = f.eval_vector(x);
-  //  CtcDynCid* ctc_dyncid = new CtcDynCid(f1);     
-  CtcDynCidGuess* ctc_dyncid = new CtcDynCidGuess(f1);     
+  CtcDynCid* ctc_dyncid = new CtcDynCid(f1);     
+  //  CtcDynCidGuess* ctc_dyncid = new CtcDynCidGuess(f1);     
   ctc_dyncid->set_fast_mode(true);
   CtcIntegration ctc_integration(f1,ctc_dyncid);
 
