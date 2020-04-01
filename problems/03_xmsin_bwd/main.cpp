@@ -17,10 +17,11 @@ using namespace std;
 using namespace ibex;
 using namespace tubex;
 
+/*
 void contract(TubeVector& x)
 {
   tubex::Function f("x", "-sin(x)");
-  ibex::Function f1("x", "-sin(x)");
+  
   CtcPicard ctc_picard;
   
   ctc_picard.preserve_slicing(false);
@@ -34,7 +35,7 @@ void contract(TubeVector& x)
   ctc_deriv.contract(x, f.eval_vector(x),FORWARD | BACKWARD);
   
 
-  /*   
+  
        TubeVector v = f.eval_vector(x);
 
     
@@ -47,19 +48,19 @@ void contract(TubeVector& x)
   ctc_integration.contract(x,v,x[0].domain().ub(),BACKWARD) ;
   
   delete ctc_dyncid;
-  */
-}
 
+}
+*/
 int main()
 {
   /* =========== PARAMETERS =========== */
+  tubex::Function f("x", "-sin(x)");
+  Tube::enable_syntheses(false);
+  Vector epsilon(1,0.005);
+  double tf=10.;
 
-    Tube::enable_syntheses(false);
-    Vector epsilon(1,0.005);
-    double tf=10.;
-
-    vector<IntervalVector*> gates; 
-    Interval domain0(0.,tf);
+  vector<IntervalVector*> gates; 
+  Interval domain0(0.,tf);
     TrajectoryVector truth(domain0, tubex::Function("2.*atan(exp(-t)*tan(0.5))"));
      //    x.set(IntervalVector(truth(Interval(tf))), tf); // final condition
 
@@ -73,7 +74,6 @@ int main()
     TubeVector y(domain0,0.05,1);
     for (int i=0; i< nbsteps; i++){
 
-
       double t0=tf-(i+1)*step;
       double t1=tf-i*step;
       Interval domain(t0,t1);
@@ -84,15 +84,17 @@ int main()
       //      solver.set_refining_fxpt_ratio(0.999);
       solver.set_refining_fxpt_ratio(2.0);
       solver.set_propa_fxpt_ratio(0.999);
-      solver.set_var3b_fxpt_ratio(0.999);
-      //solver.set_var3b_fxpt_ratio(0.);
-      solver.set_var3b_propa_fxpt_ratio(0.999);
+      //solver.set_propa_fxpt_ratio(0.1);
+      //solver.set_var3b_fxpt_ratio(0.999);
+      solver.set_var3b_fxpt_ratio(0.);
+
       solver.set_var3b_timept(-1);
       solver.set_refining_mode(0);
+      solver.set_contraction_mode(1);
       solver.set_max_slices(40000);
       solver.set_trace(1);
       //    solver.figure()->add_trajectoryvector(&truth, "truth");
-      list<TubeVector> l_solutions = solver.solve(x, &contract);
+      list<TubeVector> l_solutions = solver.solve(x, f);
       cout << "time " << (i+1)*step ;
       if (l_solutions.size()==1) { cout << " volume " << l_solutions.front().volume() << endl;
 	volume+=l_solutions.front().volume();

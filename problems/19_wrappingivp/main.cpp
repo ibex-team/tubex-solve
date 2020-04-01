@@ -1,6 +1,6 @@
 /** 
  *  tubex-lib - Examples
- *  Solver testcase 20
+ *  Solver testcase 19
  *  \date       2020
  *  \author     Bertrand Neveu
  */
@@ -16,7 +16,6 @@ using namespace tubex;
 void contract(TubeVector& x)
 {
   tubex::Function f("x1", "x2" ,"(-x2+0.1*x1*(1-x1^2-x2^2);x1+0.1*x1*(1-x1^2-x2^2))");
-  ibex::Function f1("x1", "x2" ,"(-x2+0.1*x1*(1-x1^2-x2^2);x1+0.1*x1*(1-x1^2-x2^2))");
   CtcPicard ctc_picard;
   ctc_picard.preserve_slicing(false);
   if (x.volume() > 1.e100) 
@@ -24,20 +23,19 @@ void contract(TubeVector& x)
 
    if (x.volume() < 1.e100){
      TubeVector v = f.eval_vector(x);
-
+     
      CtcDeriv ctc_deriv;
      ctc_deriv.set_fast_mode(true);
      ctc_deriv.contract(x, v, FORWARD | BACKWARD);
+     /*
      v=f.eval_vector(x);
-
-  
-  CtcDynCid* ctc_dyncid = new CtcDynCid(f1);     
-  ctc_dyncid->set_fast_mode(true);
-  CtcIntegration ctc_integration(f1,ctc_dyncid);
-  ctc_integration.contract(x,v,x[0].domain().lb(),FORWARD) ;
-  ctc_integration.contract(x,v,x[0].domain().ub(),BACKWARD) ;
-  delete ctc_dyncid;
-
+     CtcDynCid* ctc_dyncid = new CtcDynCid(f);     
+     //  ctc_dyncid->set_fast_mode(true);
+     CtcIntegration ctc_integration(f,ctc_dyncid);
+     ctc_integration.contract(x,v,x[0].domain().lb(),FORWARD) ;
+     ctc_integration.contract(x,v,x[0].domain().ub(),BACKWARD) ;
+     delete ctc_dyncid;
+     */
 
 
    }
@@ -47,6 +45,7 @@ void contract(TubeVector& x)
 
 int main()
 {
+  tubex::Function f("x1", "x2" ,"(-x2+0.1*x1*(1-x1^2-x2^2);x1+0.1*x1*(1-x1^2-x2^2))");
   /* =========== PARAMETERS =========== */
     Tube::enable_syntheses(false);
     IntervalVector v(2);
@@ -87,13 +86,14 @@ int main()
 
     solver.set_var3b_fxpt_ratio(0.);
     //    solver.set_var3b_fxpt_ratio(0.9999);
-    solver.set_var3b_propa_fxpt_ratio(0.9999);
+
     solver.set_var3b_timept(1);
     solver.set_max_slices(40000);
     solver.set_refining_mode(2);
     solver.set_trace(1);
-    solver.set_bisection_timept(0);
-    list<TubeVector> l_solutions = solver.solve(x, &contract);
+    solver.set_bisection_timept(-2);
+    solver.set_contraction_mode(2);
+    list<TubeVector> l_solutions = solver.solve(x, f);
     //    cout << "time " << (i+1)*step << " nb sol " << l_solutions.size() << endl;
     if (l_solutions.size()==1) {// cout << " volume " << l_solutions.front().volume() << endl;
       volume+=l_solutions.front().volume();

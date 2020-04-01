@@ -18,6 +18,12 @@
 #include "tubex_TubeVector.h"
 #include "tubex_TrajectoryVector.h"
 #include "tubex_VIBesFigTubeVector.h"
+#include "tubex_CtcPicard.h"
+
+#include "tubex_CtcDeriv.h"
+#include "tubex_CtcIntegration.h"
+#include "tubex_CtcDynCid.h"
+#include "tubex_CtcDynCidGuess.h"
 
 using namespace std;
 namespace tubex
@@ -47,13 +53,16 @@ namespace tubex
       // refining mode : which slices to refine
       void set_refining_mode(int refining_mode); // 0 : all slices ; 1 : one slice ; 2 : the slices with a difference between input and output gates greater more than average ; 3 : the slices with with a difference between input and output gates greater more than the median.
 
+      void set_contraction_mode(int contraction_mode) ; // 0 : ctcDeriv, 1 : ctcIntegration
       void set_trace(int trace);
       double solving_time;
 
       const std::list<TubeVector> solve(const TubeVector& x0, void (*ctc_func)(TubeVector&));
+      const std::list<TubeVector> solve(const TubeVector& x0, tubex::Function & f,void (*ctc_func)(TubeVector&)=NULL );
+      const std::list<TubeVector> solve(const TubeVector& x0, tubex::Function* f,void (*ctc_func)(TubeVector&));
       VIBesFigTubeVector* figure();
       static const ibex::BoolInterval solutions_contain(const std::list<TubeVector>& l_solutions, const TrajectoryVector& truth);
-
+      void (*ctc_func) (TubeVector&);
 
   protected:
       bool empty_intersection(TubeVector& t1, TubeVector& t2);
@@ -61,8 +70,9 @@ namespace tubex
       void clustering(std::list<TubeVector>& l_tubes);
       bool stopping_condition_met(const TubeVector& x);
       bool fixed_point_reached(double volume_before, double volume_after, float fxpt_ratio);
-      void propagation(TubeVector &x, void (*ctc_func)(TubeVector&), float propa_fxpt_ratio);
-      void var3b(TubeVector &x, void (*ctc_func)(TubeVector&));
+      void propagation(TubeVector &x, tubex::Function* f, void (*ctc_func)(TubeVector&), float propa_fxpt_ratio, bool incremental, double t0, TPropagation propa= FORWARD | BACKWARD );
+
+      void var3b(TubeVector &x,tubex::Function* f, void (*ctc_func)(TubeVector&));
       bool refining (TubeVector &x);
       double refining_threshold(const TubeVector &x, 
 				vector<double>& slice_step, vector<double>& t_refining);
@@ -81,9 +91,11 @@ namespace tubex
       int m_bisection_timept=0;
       int m_trace=0;
       int m_max_slices=5000;
-      int m_refining_mode=0; 
+      int m_refining_mode=0;
+      int m_contraction_mode=0; 
       // Embedded graphics
       VIBesFigTubeVector *m_fig = NULL;
+
   };
 }
 

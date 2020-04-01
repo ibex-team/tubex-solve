@@ -20,7 +20,7 @@ using namespace tubex;
 void contract(TubeVector& x)
 {
   tubex::Function f("y1", "y2", "(-0.7*y1 ; 0.7*y1 - (ln(2)/5.)*y2)");
-  ibex::Function f1("y1", "y2", "(-0.7*y1 ; 0.7*y1 - (ln(2)/5.)*y2)");
+
   
   CtcPicard ctc_picard;
   ctc_picard.preserve_slicing(false);
@@ -33,10 +33,10 @@ void contract(TubeVector& x)
   ctc_deriv.contract(x, v, FORWARD | BACKWARD);
   */
       
-  CtcDynCid* ctc_dyncid = new CtcDynCid(f1);     
-  //CtcDynCidGuess* ctc_dyncid = new CtcDynCidGuess(f1);     
+  CtcDynCid* ctc_dyncid = new CtcDynCid(f);     
+  //CtcDynCidGuess* ctc_dyncid = new CtcDynCidGuess(f);     
   ctc_dyncid->set_fast_mode(true);
-  CtcIntegration ctc_integration(f1,ctc_dyncid);
+  CtcIntegration ctc_integration(f,ctc_dyncid);
 
   ctc_integration.contract(x,v,x[0].domain().lb(),FORWARD) ;
 
@@ -56,7 +56,7 @@ void contract(TubeVector& x)
 int main()
 {
   /* =========== PARAMETERS =========== */
-
+  tubex::Function f("y1", "y2", "(-0.7*y1 ; 0.7*y1 - (ln(2)/5.)*y2)");
     Tube::enable_syntheses(false);
     int n = 2;
     Interval domain(0.,6.);
@@ -85,21 +85,22 @@ int main()
     //    solver.set_refining_fxpt_ratio(0.999);
     solver.set_refining_fxpt_ratio(2.0);
     solver.set_propa_fxpt_ratio(0.99999);
-    //    solver.set_var3b_fxpt_ratio(0.99999);
-    //solver.set_var3b_fxpt_ratio(0.1);
-    solver.set_var3b_fxpt_ratio(0.);
+
+    solver.set_var3b_fxpt_ratio(0.1);
+    //solver.set_var3b_fxpt_ratio(0.);
     
-    solver.set_var3b_propa_fxpt_ratio(0.99999);
+
     solver.set_var3b_timept(2);
  
     solver.set_trace(1);
     solver.set_max_slices(40000);
     solver.set_refining_mode(3);
-    solver.set_bisection_timept(3);
+    solver.set_contraction_mode(2);
+    solver.set_bisection_timept(-2);
     // Displaying the additional restriction:
     //    solver.figure()->draw_box(domain_restriction, max_restriction, "blue");
 
-    list<TubeVector> l_solutions = solver.solve(x, &contract);
+    list<TubeVector> l_solutions = solver.solve(x, f);
 
     
   return EXIT_SUCCESS;

@@ -20,7 +20,7 @@ using namespace tubex;
 void contract(TubeVector& x)
 {
   tubex::Function f("x", "-x");
-  ibex::Function f1("x", "-x");
+
   CtcPicard ctc_picard;
   
   ctc_picard.preserve_slicing(false);
@@ -38,9 +38,9 @@ void contract(TubeVector& x)
 
   /*
    TubeVector v = f.eval_vector(x);
-   CtcDynCid* ctc_dyncid = new CtcDynCid(f1);     
+   CtcDynCid* ctc_dyncid = new CtcDynCid(f);     
    ctc_dyncid->set_fast_mode(true);
-   CtcIntegration ctc_integration(f1,ctc_dyncid);
+   CtcIntegration ctc_integration(f,ctc_dyncid);
   
    ctc_integration.contract(x,v,x[0].domain().lb(),FORWARD) ;
   
@@ -54,6 +54,7 @@ void contract(TubeVector& x)
 int main()
 {
   /* =========== PARAMETERS =========== */
+  tubex::Function f("x", "-x");
 
     Tube::enable_syntheses(false);
     Vector epsilon(1, 0.005);
@@ -63,7 +64,8 @@ int main()
     Interval domain0(0.,tf);
     TrajectoryVector truth(domain0, tubex::Function("exp(-t)"));
     //    x.set(IntervalVector(truth(Interval(tf))), tf); // final condition
-    v[0]=Interval(exp(Interval(-tf)));  /* =========== SOLVER =========== */
+    v[0]=Interval(exp(Interval(-tf)));  
+    /* =========== SOLVER =========== */
     double volume=0.0;
     double totaltime=0.0;
     double step=10.;
@@ -85,17 +87,21 @@ int main()
       solver.set_refining_fxpt_ratio(2.0);
       //      solver.set_propa_fxpt_ratio(0.9999);
       solver.set_propa_fxpt_ratio(0.99);
+      //      solver.set_propa_fxpt_ratio(0.1);
 
-      solver.set_var3b_fxpt_ratio(0.);
+      //solver.set_var3b_fxpt_ratio(0.);
       solver.set_var3b_fxpt_ratio(0.99);
-      solver.set_var3b_propa_fxpt_ratio(0.99);
+      //
       solver.set_var3b_timept(-1);
       solver.set_trace(1);
       solver.set_max_slices(20000);
       solver.set_refining_mode(0);
-      solver.set_bisection_timept(-1);
+      solver.set_bisection_timept(0);
+      solver.set_contraction_mode(0);
       //    solver.figure()->add_trajectoryvector(&truth, "truth");
-      list<TubeVector> l_solutions = solver.solve(x, &contract);
+
+      list<TubeVector> l_solutions = solver.solve(x, f);
+      
       cout << "time " << (i+1)*step <<  "nb sol " << l_solutions.size() << endl;
       if (l_solutions.size()==1) { cout << " volume " << l_solutions.front().volume() << endl;
 	volume+=l_solutions.front().volume();

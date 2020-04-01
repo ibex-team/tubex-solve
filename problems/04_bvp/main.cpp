@@ -38,33 +38,35 @@ void contract(TubeVector& x)
     x.set(IntervalVector(bounds[0]), 0.);
     x.set(IntervalVector(bounds[1]), 1. );
   
+
   // Differential equation
 
     tubex::Function f("x", "x");
-    ibex::Function f1("x", "x");
+
     //    cout << " x before Picard " << x << x.volume() << endl;
     //    cout << " first slice " << *(x[0].first_slice()) << endl;
     CtcPicard ctc_picard;
     
-    ctc_picard.preserve_slicing(true);
+    /*    ctc_picard.preserve_slicing(true);
     if (x.volume() > 1.e100)
       ctc_picard.contract(f, x);
-
+    */
     //    cout << " x after Picard " << x << x.volume() << endl;
     //    cout << " first slice " << *(x[0].first_slice()) << endl;
 
-    
+    /*
     CtcDeriv ctc_deriv;
     ctc_deriv.preserve_slicing(false);
     ctc_deriv.set_fast_mode(true);
     ctc_deriv.contract(x, f.eval_vector(x));
+    */
     
     /*
     TubeVector v = f.eval_vector(x);
-    CtcDynCid* ctc_dyncid = new CtcDynCid(f1);     
-    //CtcDynCidGuess* ctc_dyncid = new CtcDynCidGuess(f1);     
+    CtcDynCid* ctc_dyncid = new CtcDynCid(f);     
+    //CtcDynCidGuess* ctc_dyncid = new CtcDynCidGuess(f);     
     ctc_dyncid->set_fast_mode(true);
-    CtcIntegration ctc_integration(f1,ctc_dyncid);
+    CtcIntegration ctc_integration(f,ctc_dyncid);
 
     ctc_integration.contract(x,v,x[0].domain().lb(),FORWARD) ;
 
@@ -77,12 +79,13 @@ void contract(TubeVector& x)
 
 int main()
 {
+    tubex::Function f("x", "x");
   /* =========== PARAMETERS =========== */
 
     Tube::enable_syntheses(false);
     int n = 1;
     
-    Vector epsilon(n, 0.001);
+    Vector epsilon(n, 0.0005);
     Interval domain(0.,1.);
     //    TubeVector x(domain, n, Interval (-1.e100,1.e100));
     TubeVector x(domain, n);
@@ -97,17 +100,18 @@ int main()
     solver.set_refining_fxpt_ratio(2.0);
     //    solver.set_refining_fxpt_ratio(0.9999);
     solver.set_propa_fxpt_ratio(0.999);
-    solver.set_var3b_fxpt_ratio(0.999);
-    //   solver.set_var3b_fxpt_ratio(0.);
-    solver.set_var3b_propa_fxpt_ratio(0.999);
+    //    solver.set_var3b_fxpt_ratio(0.999);
+    solver.set_var3b_fxpt_ratio(0.);
+
     solver.set_trace(1);
     solver.set_var3b_timept(2);
     solver.set_bisection_timept(3);
-    solver.set_max_slices(500);
+    solver.set_max_slices(10000);
     solver.set_refining_mode(0);
+    solver.set_contraction_mode(0);
     //    solver.figure()->add_trajectoryvector(&truth1, "truth1");
     //    solver.figure()->add_trajectoryvector(&truth2, "truth2");
-    list<TubeVector> l_solutions = solver.solve(x, &contract);
+    list<TubeVector> l_solutions = solver.solve(x, f, &contract);
 
 
   // Checking if this example still works:

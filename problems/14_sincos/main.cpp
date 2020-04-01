@@ -8,7 +8,7 @@ using namespace tubex;
 
 void contract(TubeVector& x)
 {
-  tubex::Function f("x1", "x2" ,"(-x2+0.1*x1*(1-x1^2-x2^2);x1+0.1*x1*(1-x1^2-x2^2))");
+   tubex::Function f("x1", "x2" ,"(10*(x1-sin(x2))+cos(x2);1)");
 
   CtcPicard ctc_picard;
   ctc_picard.preserve_slicing(false);
@@ -22,18 +22,19 @@ void contract(TubeVector& x)
 
 int main()
 {
+  tubex::Function f("x1", "x2" ,"(10*(x1-sin(x2))+cos(x2);1)");
   /* =========== PARAMETERS =========== */
     Tube::enable_syntheses(false);
     IntervalVector v(2);
     vector<IntervalVector*> gates;    
     
-    v[0]=Interval(1.0,1.0).inflate(0.1);
-    v[1]=Interval(0.0,0.0).inflate(0.1);
+    v[0]=Interval(0.0,0.0);
+    v[1]=Interval(0.0,0.0);
 
     double volume=0.0;
     double totaltime=0.0;
 
-    double step=1.0;
+    double step=3.0;
     int nbsteps=1;
     for (int i=0; i< nbsteps; i++){
 
@@ -60,13 +61,15 @@ int main()
 
     solver.set_var3b_propa_fxpt_ratio(0.999);
     //    solver.set_var3b_fxpt_ratio(0.);
-    solver.set_var3b_fxpt_ratio(0.9999);
+    //    solver.set_var3b_fxpt_ratio(0.9999);
     solver.set_var3b_timept(0);
     solver.set_max_slices(50000);
-    solver.set_refining_mode(2);
+    solver.set_refining_mode(3);
+    solver.set_contraction_mode(2);
     solver.set_trace(1);
+    solver.set_bisection_timept(-2);
 
-    list<TubeVector> l_solutions = solver.solve(x, &contract);
+    list<TubeVector> l_solutions = solver.solve(x, f);
     //    cout << "time " << (i+1)*step << " nb sol " << l_solutions.size() << endl;
     if (l_solutions.size()==1) {// cout << " volume " << l_solutions.front().volume() << endl;
       volume+=l_solutions.front().volume();

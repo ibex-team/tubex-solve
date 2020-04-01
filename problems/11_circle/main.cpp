@@ -10,7 +10,7 @@ using namespace tubex;
 void contract(TubeVector& x)
 {
   tubex::Function f("x1", "x2" ,"(-x2;x1)");
-  ibex::Function f1("x1", "x2" ,"(-x2;x1)");
+  
 
   CtcPicard ctc_picard;
   ctc_picard.preserve_slicing(false);
@@ -23,10 +23,10 @@ void contract(TubeVector& x)
   */
   
   TubeVector v = f.eval_vector(x);
-  CtcDynCid* ctc_dyncid = new CtcDynCid(f1);     
-  //  CtcDynCidGuess* ctc_dyncid = new CtcDynCidGuess(f1);     
+  CtcDynCid* ctc_dyncid = new CtcDynCid(f);     
+  //  CtcDynCidGuess* ctc_dyncid = new CtcDynCidGuess(f);     
   ctc_dyncid->set_fast_mode(true);
-  CtcIntegration ctc_integration(f1,ctc_dyncid);
+  CtcIntegration ctc_integration(f,ctc_dyncid);
 
   ctc_integration.contract(x,v,x[0].domain().lb(),FORWARD) ;
 
@@ -38,11 +38,12 @@ void contract(TubeVector& x)
 
 int main()
 {
+  tubex::Function f("x1", "x2" ,"(-x2;x1)");
   /* =========== PARAMETERS =========== */
   double pi=M_PI;
     Tube::enable_syntheses(false);
 
-    //    Vector epsilon(2, 0.005);
+
     double volume=0.0;
     double totaltime=0.0;
 
@@ -55,7 +56,7 @@ int main()
     v[1]=Interval(1.,1.);
     x.set(v, 0.); // ini
     cout << x[0](0.) << " "  << x[1](0.) << endl;
-    // double eps=100;
+
     double eps=0.003;
     double step=pi;
     int nbsteps=1;
@@ -74,16 +75,17 @@ int main()
     //solver.set_refining_fxpt_ratio(0.9999);
       solver.set_propa_fxpt_ratio(0.99);
 
-      // solver.set_var3b_fxpt_ratio(0.99);
+      //  solver.set_var3b_fxpt_ratio(0.99);
       solver.set_var3b_fxpt_ratio(0.);
-      solver.set_var3b_propa_fxpt_ratio(0.99);
+
       solver.set_max_slices(20000);
       solver.set_var3b_timept(1);
       solver.set_refining_mode(2);
+      solver.set_contraction_mode(1);
       solver.set_trace(1);
 
 
-    list<TubeVector> l_solutions = solver.solve(x, &contract);
+    list<TubeVector> l_solutions = solver.solve(x, f);
     cout << "nb sol " << l_solutions.size() << endl;
     if (l_solutions.size()==1) { cout << " volume " << l_solutions.front().volume() << endl;
       volume+=l_solutions.front().volume();

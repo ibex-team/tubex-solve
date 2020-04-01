@@ -18,6 +18,7 @@ using namespace std;
 using namespace ibex;
 using namespace tubex;
 
+/*
 void contract(TubeVector& x)
 {
   tubex::Function f("x", "-sin(x)");
@@ -43,7 +44,7 @@ void contract(TubeVector& x)
   
   delete ctc_dyncid;
 
-  */
+  
 
   
 
@@ -54,11 +55,11 @@ void contract(TubeVector& x)
   ctc_deriv.contract(x, f.eval_vector(x), FORWARD |  BACKWARD );
   
 }
-
+*/
 int main()
 {
   /* =========== PARAMETERS =========== */
-
+  tubex::Function f("x", "-sin(x)");
     Tube::enable_syntheses(false);
     Vector epsilon(1,0.002); 
     double tf=10.;
@@ -84,17 +85,19 @@ int main()
   /* =========== SOLVER =========== */
 
     tubex::Solver solver(epsilon);
-    solver.set_refining_fxpt_ratio(0.99999);
+    //    solver.set_refining_fxpt_ratio(0.99999);
+    solver.set_refining_fxpt_ratio(2.0);
     solver.set_propa_fxpt_ratio(0.999);
-    //    solver.set_var3b_fxpt_ratio(0.);
-    solver.set_var3b_fxpt_ratio(0.9999);
-    solver.set_var3b_propa_fxpt_ratio(0.999);
+    solver.set_var3b_fxpt_ratio(0.);
+    //solver.set_var3b_fxpt_ratio(0.999);
+
     solver.set_var3b_timept(1);
     solver.set_max_slices(50000);
     solver.set_refining_mode(0);
+    solver.set_contraction_mode(2);
     solver.set_trace(1);
     //    solver.figure()->add_trajectoryvector(&truth, "truth");
-    list<TubeVector> l_solutions = solver.solve(x, &contract);
+    list<TubeVector> l_solutions = solver.solve(x, f);
     if (l_solutions.size()==1) { cout << " volume " << l_solutions.front().volume() << endl;
        volume+=l_solutions.front().volume();
        totaltime+=solver.solving_time;
