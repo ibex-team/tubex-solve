@@ -107,7 +107,7 @@ int main()
       solver.set_refining_fxpt_ratio(0.99999);
       solver.set_propa_fxpt_ratio(1.);
       solver.set_var3b_fxpt_ratio(0.);
-      solver.set_var3b_propa_fxpt_ratio(0.99);
+
       solver.set_max_slices(10000);
       solver.set_refining_mode(0);
       solver.set_trace(1);

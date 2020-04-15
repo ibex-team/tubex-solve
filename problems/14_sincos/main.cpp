@@ -59,15 +59,15 @@ int main()
 
     solver.set_propa_fxpt_ratio(0.9999);
 
-    solver.set_var3b_propa_fxpt_ratio(0.999);
-    //    solver.set_var3b_fxpt_ratio(0.);
-    //    solver.set_var3b_fxpt_ratio(0.9999);
+
+    //solver.set_var3b_fxpt_ratio(0.);
+    solver.set_var3b_fxpt_ratio(0.9999);
     solver.set_var3b_timept(0);
     solver.set_max_slices(50000);
     solver.set_refining_mode(3);
     solver.set_contraction_mode(2);
     solver.set_trace(1);
-    solver.set_bisection_timept(-2);
+    solver.set_bisection_timept(-1);
 
     list<TubeVector> l_solutions = solver.solve(x, f);
     //    cout << "time " << (i+1)*step << " nb sol " << l_solutions.size() << endl;

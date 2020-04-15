@@ -174,38 +174,122 @@ namespace tubex
 	for (const Slice*slice=s[0]; slice!=NULL; slice=slice->next_slice()){
 
 	  t_refining.push_back(slice->domain().mid());
-	  //	       cout << *slice << endl;
+
 	  double step_max= fabs(slice->output_gate().mid() - slice->input_gate().mid());
-	  //	  cout << " step  " <<  t_refining.size() << " " << step_max << " input " << slice->input_gate() << " output " << slice->output_gate() << endl;
+
 
 
 	  for (int k=1; k< x.size(); k++){
-	    //	    cout << " step k " << k << " " << fabs(s[k]->output_gate().mid() - s[k]->input_gate().mid()) << endl;
+
 	    step_max=std::max(step_max,fabs(s[k]->output_gate().mid() - s[k]->input_gate().mid()));
-	    //	    cout << " step_max " << k << "  " << step_max << endl;
+
 	    s[k]=s[k]->next_slice();
 
 	  }
-	  //	  cout << "step_max " << step_max << endl;
+
 	  slice_step.push_back(step_max);
-	  if (m_refining_mode==3) stepmed.push_back(step_max); // storage for computing the median value
-	  if (m_refining_mode==2)
-	    if (step_max < DBL_MAX)  // to not take into account infinite gates in average computation
+	  if (step_max < DBL_MAX)  // to not take into account infinite gates in average computation
+	    {
+	      if (m_refining_mode==3) stepmed.push_back(step_max); // storage for computing the median value
+	      if (m_refining_mode==2)
+
 	      {
 		nbsteps++;
 		step_threshold=(step_threshold*(nbsteps-1)+step_max)/nbsteps;
 	      }
-	  
-	  //	  cout << "step_threshold  " << step_threshold << endl;
+	    }
+
 	}
 	if (m_refining_mode==3){
 	  sort(stepmed.begin(),stepmed.end());
 	  step_threshold =stepmed[stepmed.size()/2];
 	}
-	//       	cout << " step_threshold " << step_threshold << endl;
-	//	cout << " step_max " << stepmed[stepmed.size()-1] << endl;
+
 	return step_threshold;
   }
+
+
+  void Solver::bisection_guess (TubeVector & x, tubex::Function& f){
+    TubeVector v = f.eval_vector(x);
+    std::pair< int,std::pair<ibex::Interval,double> > guess = bisection_guess (x,v,f);
+    //    cout << " var " << guess.first << " time interval " << guess.second.first << " point " << guess.second.second << endl;
+   
+  }
+
+std::pair<int,std::pair<ibex::Interval,double>> Solver::bisection_guess(TubeVector& x, TubeVector& v, tubex::Function& fnc){
+
+		/*variable  domain - bisection point*/
+		pair <int, pair <ibex::Interval,double> > bisection;
+
+		/*init pair*/
+		bisection = make_pair(-1,make_pair(Interval(-1,-1),-1));
+
+		/*check if everything is ok*/
+		assert(x.size() == v.size());
+		assert(x.domain() == v.domain());
+		assert(TubeVector::same_slicing(x, v));
+
+		/*init all the tubes*/
+		vector<Slice*> x_slice;
+		vector<Slice*> v_slice;
+
+		/*push slices*/
+		for (int i = 0 ; i < x.size() ; i++){
+			x_slice.push_back(x[i].first_slice());
+			v_slice.push_back(v[i].first_slice());
+		}
+
+		/*Contractor deriv*/
+		CtcDeriv ctc_deriv;
+
+		while(x_slice[0] != NULL){
+
+			for (int i = 0 ; i < x.size(); i++){
+
+				vector<Slice> x_slice_aux;
+				vector<Slice> v_slice_aux;
+				for (int j = 0 ; j < x_slice.size() ; j++){
+					x_slice_aux.push_back(*x_slice[i]);
+					v_slice_aux.push_back(*v_slice[i]);
+				}
+				double point  = x_slice[i]->output_gate().mid();
+				x_slice_aux[i].set_output_gate(point);
+				for (int j = 0 ;  j < x_slice.size() ; j++){
+					double sx;
+					do
+					{
+						sx = x_slice_aux[j].volume();
+						ctc_deriv.contract(x_slice_aux[j], v_slice_aux[j], FORWARD);
+
+						/*evaluation*/
+						IntervalVector envelope(x_slice.size());
+
+						for (int k = 0 ; k < x_slice.size() ; k++)
+								envelope[k] = x_slice_aux[k].codomain();
+						v_slice_aux[j].set_envelope(fnc.eval_slice(x_slice_aux[j].domain(),envelope)[j]);
+
+					} while(sx-x_slice_aux[j].volume()>0);
+
+					if (x_slice_aux[j].is_empty()){
+						bisection = make_pair(i,make_pair(x_slice_aux[j].domain(),point));
+						return bisection;
+					}
+				}
+			}
+
+			/*move to the next slice*/
+			for (int i = 0 ; i < x.size() ; i++){
+				x_slice[i] = x_slice[i]->next_slice();
+				v_slice[i] = v_slice[i]->next_slice();
+			}
+		}
+
+		/*there is not candidate to bisect, return -1 at variable*/
+		return bisection;
+	}
+
+
+
 
   const list<TubeVector> Solver::solve(const TubeVector& x0,  tubex::Function& f, void (*ctc_func)(TubeVector&)) { return (solve(x0,&f,ctc_func));}
 
@@ -284,9 +368,10 @@ namespace tubex
 	if(m_refining_fxpt_ratio != 0.)
 	  if (! refining(x))
 	    {
-	      cout << " end refining " <<  volume_before_refining << " after  " << x.volume() << endl; 
+	      if (m_trace)
+		cout << " end refining " <<  volume_before_refining << " after  " << x.volume() << endl; 
 	      break;}
-	cout << " nb_slices after refining step " << x[0].nb_slices() << endl;
+	if (m_trace) cout << " nb_slices after refining step " << x[0].nb_slices() << endl;
 	// 2. Propagations up to the fixed point
 	//	propagation(x, ctc_func, m_propa_fxpt_ratio);
 	propagation(x, f, ctc_func, m_propa_fxpt_ratio, false, x[0].domain().lb());
@@ -305,7 +390,7 @@ namespace tubex
 	  while(!emptiness  
 		&& !fixed_point_reached(volume_before_var3b, x.volume(), m_var3b_fxpt_ratio));
 	  }
-       	cout << " volume after refining " <<  x.volume() << endl;
+	if (m_trace) cout << " volume after refining " <<  x.volume() << endl;
       }
       
       while(!emptiness
@@ -333,9 +418,10 @@ namespace tubex
 
           else
           {
-            cout << "Bisection... (level " << level << ")" << endl;
+            if (m_trace) cout << "Bisection... (level " << level << ")" << endl;
+	    //	    if (f) bisection_guess (x,*f);  //TODO use bisection_guess
 	    double t_bisection;
-	    
+
 	    if (m_bisection_timept==0)
 	      x.max_gate_diam(t_bisection);
 	    else if (m_bisection_timept==1)
@@ -355,8 +441,6 @@ namespace tubex
 		t_bisection=x[0].domain().ub();
 	    }
 
-	 
-
 
 	    level++;
             try{
@@ -367,6 +451,7 @@ namespace tubex
 	    
 	      s.push_front(make_pair(make_pair(level,t_bisection), p_x.second));       // depth first variant
 	      s.push_front(make_pair(make_pair(level,t_bisection), p_x.first));
+              if (m_trace)	      cout << " t_bisection " << t_bisection << " x volume " << x.volume() << " nb_slices " << x.nb_slices()  << endl;
 
 	    }
 	    catch (Exception &)   // when the bisection time was not bisectable, change to largest_slice
@@ -383,7 +468,7 @@ namespace tubex
 	      }
 
 
-	    cout << " t_bisection " << t_bisection << " x volume " << x.volume() << " nb_slices " << x.nb_slices() << endl;
+	    //  cout << " t_bisection " << t_bisection << " x volume " << x.volume() << " nb_slices " << x.nb_slices() <<   endl;
              
      	  }
     	}
@@ -615,104 +700,96 @@ namespace tubex
   }
   */
 
-  void Solver::propagation(TubeVector &x, tubex::Function* f, void (*ctc_func)(TubeVector&), float propa_fxpt_ratio, bool incremental, double t0, TPropagation propa )
+  void Solver::propagation(TubeVector &x, tubex::Function* f, void (*ctc_func)(TubeVector&), float propa_fxpt_ratio, bool incremental, double t0 )
   {
-
-
-    if (f){
-      CtcPicard ctc_picard;
-  
-      ctc_picard.preserve_slicing(true);
-      if (x.volume()>= DBL_MAX) 
-	ctc_picard.contract(*f, x, FORWARD | BACKWARD);
-    }
-
-
     if(propa_fxpt_ratio == 0.)
       return;
-
     
-
     double volume_before_ctc;
-
     Ctc* ctc_dyncid;
     CtcIntegration* ctc_integration;
     if (f){
-      if (m_contraction_mode==1) 
-	ctc_dyncid= new CtcDynCid(*f);     
-      else
+      if (m_contraction_mode==0)
+	//	ctc_dyncid =  new CtcDynBasic(*f,1.e-8);
+	ctc_dyncid =  new CtcDynBasic(*f);
+      else if (m_contraction_mode==1) 
+       	ctc_dyncid =  new CtcDynCid(*f);
+      else if (m_contraction_mode==2)
+	//	ctc_dyncid =  new CtcDynCidGuess(*f,1.e-8);
 	ctc_dyncid =  new CtcDynCidGuess(*f);
-      ctc_dyncid->set_fast_mode(true);
-      ctc_integration = new CtcIntegration (*f,ctc_dyncid);
+
+
+      if (m_contraction_mode <=2){
+	ctc_dyncid->set_fast_mode(true);
+	ctc_integration = new CtcIntegration (*f,ctc_dyncid);
+	if(x.volume() >= DBL_MAX) ctc_integration->set_picard_mode(true);
+      }
     }
+
     do
       {
-
 	volume_before_ctc = x.volume();
         if (ctc_func) ctc_func(x);  // Other constraints contraction
 	if (f){                     // ODE contraction
-	  if (m_contraction_mode==0){   // CtcDeriv
+	  
+	  if (m_contraction_mode==4){   // CtcDeriv
+	    if (x.volume()>= DBL_MAX){
+	      cout << " volume before picard " << x.volume() << endl;
+	      CtcPicard ctc_picard;
+  
+	      ctc_picard.preserve_slicing(true);
+	      ctc_picard.contract(*f, x, FORWARD | BACKWARD);
+	      cout << " volume after picard " << x.volume() << endl;
+	    }
 
-    
-	  CtcDeriv ctc;
-
-      //      cout << " volume before ctc " << volume_before_ctc << endl;
-	  ctc.set_fast_mode(true);
-
-	  ctc.contract(x, f->eval_vector(x),FORWARD | BACKWARD);
-
-	  //      cout << "volume after ctc " << x.volume() << endl;
-
+	    CtcDeriv ctc;
+	    //	    cout << " volume before ctc deriv " << volume_before_ctc << endl;
+	    ctc.set_fast_mode(true);
+	    ctc.contract(x, f->eval_vector(x),FORWARD | BACKWARD);
+	    //	    cout << "volume after ctc deriv " << x.volume() << endl;
 	  }
     
 	  else{                           // CtcIntegration
-	    
-
-
-
-
+	  
+	    incremental=false ; // stronger contraction without incrementality ; comment this line for incrementality
 	    TubeVector v = f->eval_vector(x);
-
-	
-	    if (incremental && ctc_func==NULL){ // incrementality if first call, incremental and  
+	    if (incremental && ctc_func==NULL){ // incrementality if incremental and no other function
 	      ctc_integration->set_incremental_mode(true);
 	      ctc_integration->contract(x,v,t0,FORWARD) ;
 	      ctc_integration->contract(x,v,t0,BACKWARD) ;
+
 	    }
 	    else{
+
 	      ctc_integration->set_incremental_mode(false);
-	      ctc_integration->contract(x,v,x[0].domain().lb(),FORWARD) ;
-	      ctc_integration->contract(x,v,x[0].domain().ub(),BACKWARD) ;
-
+	      ctc_integration->contract(x,v,x[0].domain().lb(),FORWARD);
+	      ctc_integration->contract(x,v,x[0].domain().ub(),BACKWARD);
 	    }
-
 	  }
+	  //	  cout << " tube after contraction " << x << " volume after " << x.volume() << endl;
 	}
       }
+
     while(!(x.is_empty())
 	  && !fixed_point_reached(volume_before_ctc, x.volume(), propa_fxpt_ratio));
-    if (ctc_dyncid) delete ctc_dyncid;
+    if (m_contraction_mode <=2) {delete ctc_dyncid; delete ctc_integration;}
   }
 
 
 
 
 
-  
 
-
-
-
-
-
-  //  void Solver::var3b(TubeVector &x, void (*ctc_func)(TubeVector&))
   void Solver::var3b(TubeVector &x, tubex::Function * f,void (*ctc_func)(TubeVector&) )
   {
     if(m_var3b_fxpt_ratio == 0. || x.volume() >= DBL_MAX)
       return;
 
+    int contraction_mode = m_contraction_mode;
+    m_contraction_mode=4;  // var3B calls CtcDeriv as internal contractor 
+    // incremental contractors are too weak and CtcIntegration with CtcDyncid or CtcDyncidGuess are too costly
+    
     double t_bisection;
-
     if (m_var3b_timept==1)
       t_bisection=x[0].domain().ub();
     else if (m_var3b_timept==-1)
@@ -736,41 +813,41 @@ namespace tubex
 	    {pair<TubeVector,TubeVector> p_x = x.bisect(t_bisection,k,rate);
 
 	     TubeVector branch_x= p_x.first;
-	     //	     propagation(branch_x, ctc_func, m_propa_fxpt_ratio);
 	     propagation(branch_x, f, ctc_func, m_propa_fxpt_ratio, true, t_bisection);
 	     if (branch_x.is_empty())
 	       x=p_x.second;
 	     else {x = p_x.second | branch_x ; break;}
+
 	     rate= m_var3b_bisection_ratefactor*rate;
+
 	    }
-	  
 	  catch (Exception& )
 	    {break;}
-
 	}
-	//	propagation(x,ctc_func, m_propa_fxpt_ratio);
+
 	propagation(x,f, ctc_func, m_propa_fxpt_ratio, true, t_bisection);
+
 	rate = 1 - m_var3b_bisection_minrate;
        
 	while (rate > 1-m_var3b_bisection_maxrate ){
 	  try{
 	    pair<TubeVector,TubeVector> p_x = x.bisect(t_bisection,k,rate);
 	     TubeVector branch_x= p_x.second;
-	     //	     propagation(branch_x, ctc_func, m_propa_fxpt_ratio);
 	     propagation(branch_x, f, ctc_func, m_propa_fxpt_ratio, true, t_bisection);
 	     if (branch_x.is_empty())
 	       x=p_x.first;
 	     else {x = p_x.first | branch_x ; break;}
 	     rate=1-m_var3b_bisection_ratefactor*(1-rate);
+
 	  }
 	  catch (Exception& )
 	    {break;}
-
 	}
-	//	propagation(x,ctc_func, m_propa_fxpt_ratio);
-	propagation(x,f , ctc_func, m_propa_fxpt_ratio, true, t_bisection);
-      }
 
+	propagation(x,f , ctc_func, m_propa_fxpt_ratio, true , t_bisection);
+
+      }
+    m_contraction_mode=contraction_mode;
 
   }
 

@@ -15,6 +15,7 @@
 
 #include <list>
 #include <vector>
+
 #include "tubex_TubeVector.h"
 #include "tubex_TrajectoryVector.h"
 #include "tubex_VIBesFigTubeVector.h"
@@ -24,6 +25,7 @@
 #include "tubex_CtcIntegration.h"
 #include "tubex_CtcDynCid.h"
 #include "tubex_CtcDynCidGuess.h"
+#include "tubex_CtcDynBasic.h"
 
 using namespace std;
 namespace tubex
@@ -52,8 +54,9 @@ namespace tubex
 
       // refining mode : which slices to refine
       void set_refining_mode(int refining_mode); // 0 : all slices ; 1 : one slice ; 2 : the slices with a difference between input and output gates greater more than average ; 3 : the slices with with a difference between input and output gates greater more than the median.
-
-      void set_contraction_mode(int contraction_mode) ; // 0 : ctcDeriv, 1 : ctcIntegration
+ 
+      // contraction mode :
+      void set_contraction_mode(int contraction_mode) ; // 0 for CtcDynBasic, 1 for CtcDynCid, 2 for CtcDynCidGuess, 4 for CtcDeriv
       void set_trace(int trace);
       double solving_time;
 
@@ -70,13 +73,14 @@ namespace tubex
       void clustering(std::list<TubeVector>& l_tubes);
       bool stopping_condition_met(const TubeVector& x);
       bool fixed_point_reached(double volume_before, double volume_after, float fxpt_ratio);
-      void propagation(TubeVector &x, tubex::Function* f, void (*ctc_func)(TubeVector&), float propa_fxpt_ratio, bool incremental, double t0, TPropagation propa= FORWARD | BACKWARD );
+      void propagation(TubeVector &x, tubex::Function* f, void (*ctc_func)(TubeVector&), float propa_fxpt_ratio, bool incremental, double t0);
 
       void var3b(TubeVector &x,tubex::Function* f, void (*ctc_func)(TubeVector&));
       bool refining (TubeVector &x);
       double refining_threshold(const TubeVector &x, 
 				vector<double>& slice_step, vector<double>& t_refining);
-
+      void bisection_guess (TubeVector & x, tubex::Function& f);
+std::pair<int,std::pair<ibex::Interval,double>> bisection_guess(TubeVector& x, TubeVector& v, tubex::Function& fnc);
       ibex::Vector m_max_thickness = ibex::Vector(1);
       float m_refining_fxpt_ratio = 0.005;
       float m_propa_fxpt_ratio = 0.005;

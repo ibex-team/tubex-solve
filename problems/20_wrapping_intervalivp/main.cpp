@@ -31,12 +31,12 @@ void contract(TubeVector& x)
      v=f.eval_vector(x);
 
   
-  CtcDynCid* ctc_dyncid = new CtcDynCid(f);     
-  ctc_dyncid->set_fast_mode(true);
-  CtcIntegration ctc_integration(f,ctc_dyncid);
-  ctc_integration.contract(x,v,x[0].domain().lb(),FORWARD) ;
-  ctc_integration.contract(x,v,x[0].domain().ub(),BACKWARD) ;
-  delete ctc_dyncid;
+     CtcDynCid* ctc_dyncid = new CtcDynCid(f);     
+     ctc_dyncid->set_fast_mode(true);
+     CtcIntegration ctc_integration(f,ctc_dyncid);
+     ctc_integration.contract(x,v,x[0].domain().lb(),FORWARD) ;
+     ctc_integration.contract(x,v,x[0].domain().ub(),BACKWARD) ;
+     delete ctc_dyncid;
 
 
 
@@ -83,14 +83,14 @@ int main()
 
       solver.set_propa_fxpt_ratio(0.9999);
 
-      solver.set_var3b_fxpt_ratio(0.);
-      //      solver.set_var3b_fxpt_ratio(0.9999);
+      //solver.set_var3b_fxpt_ratio(0.);
+      solver.set_var3b_fxpt_ratio(0.9999);
       solver.set_var3b_timept(0);
       solver.set_max_slices(10000);
-      solver.set_refining_mode(0);
+      solver.set_refining_mode(3);
       solver.set_trace(1);
       solver.set_bisection_timept(-1);
-      solver.set_contraction_mode(2);
+      solver.set_contraction_mode(1);
       list<TubeVector> l_solutions = solver.solve(x, f);
     //    cout << "time " << (i+1)*step << " nb sol " << l_solutions.size() << endl;
       if (l_solutions.size()==1) {// cout << " volume " << l_solutions.front().volume() << endl;

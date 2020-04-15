@@ -61,7 +61,7 @@ int main()
     int nbsteps=1;
     for (int i=0; i< nbsteps; i++){
 
-      Vector epsilon(2, 0.01);
+      Vector epsilon(2, 0.0);
 
       double t0=i*step;
       if (t0>5) break;
@@ -82,17 +82,15 @@ int main()
     solver.set_refining_fxpt_ratio(2.0);
 
     solver.set_propa_fxpt_ratio(0.9999);
-
-
-    solver.set_var3b_fxpt_ratio(0.);
-    //    solver.set_var3b_fxpt_ratio(0.9999);
+    //     solver.set_var3b_fxpt_ratio(0.);
+    solver.set_var3b_fxpt_ratio(0.9999);
 
     solver.set_var3b_timept(1);
     solver.set_max_slices(40000);
-    solver.set_refining_mode(2);
+    solver.set_refining_mode(3);
     solver.set_trace(1);
     solver.set_bisection_timept(-2);
-    solver.set_contraction_mode(2);
+    solver.set_contraction_mode(0);
     list<TubeVector> l_solutions = solver.solve(x, f);
     //    cout << "time " << (i+1)*step << " nb sol " << l_solutions.size() << endl;
     if (l_solutions.size()==1) {// cout << " volume " << l_solutions.front().volume() << endl;

@@ -17,40 +17,46 @@ using namespace std;
 using namespace ibex;
 using namespace tubex;
 
-/*
+
 void contract(TubeVector& x)
 {
   tubex::Function f("x", "-sin(x)");
-  
+  /*
   CtcPicard ctc_picard;
   
   ctc_picard.preserve_slicing(false);
   if (x.volume() > 5000.0)
     ctc_picard.contract(f, x,  BACKWARD);
   
-
+  
   CtcDeriv ctc_deriv;
   ctc_deriv.set_fast_mode(true);
   ctc_deriv.preserve_slicing(false);
   ctc_deriv.contract(x, f.eval_vector(x),FORWARD | BACKWARD);
-  
+  */
 
   
-       TubeVector v = f.eval_vector(x);
+  TubeVector v = f.eval_vector(x);
 
-    
-  CtcDynCid* ctc_dyncid = new CtcDynCid(f1);     
+  CtcDynCid* ctc_dyncid = new CtcDynCid(f);     
+  //CtcDynBasic* ctc_dyncid = new CtcDynBasic(f);     
+  //CtcDynCidGuess* ctc_dyncid = new CtcDynCidGuess(f);     
   ctc_dyncid->set_fast_mode(true);
-  CtcIntegration ctc_integration(f1,ctc_dyncid);
+  CtcIntegration ctc_integration(f,ctc_dyncid);
+  //  cout << " x before call to contract " << x << endl;
+  //
+
+  //  ctc_integration.set_picard_mode(true);
   
   ctc_integration.contract(x,v,x[0].domain().lb(),FORWARD) ;
-  
+  //  cout << " x after call to fwd contract " << x << endl;
   ctc_integration.contract(x,v,x[0].domain().ub(),BACKWARD) ;
-  
+
+  //  cout << " x after end backward " << x << endl;
   delete ctc_dyncid;
 
 }
-*/
+
 int main()
 {
   /* =========== PARAMETERS =========== */
@@ -78,6 +84,7 @@ int main()
       double t1=tf-i*step;
       Interval domain(t0,t1);
       TubeVector x(domain, step/5, 1);
+      // TubeVector x(domain, step, 1);
       x.set(v,t1 ); // final condition at t1
 
       tubex::Solver solver(epsilon);
@@ -87,7 +94,7 @@ int main()
       //solver.set_propa_fxpt_ratio(0.1);
       //solver.set_var3b_fxpt_ratio(0.999);
       solver.set_var3b_fxpt_ratio(0.);
-
+      solver.set_bisection_timept(1);
       solver.set_var3b_timept(-1);
       solver.set_refining_mode(0);
       solver.set_contraction_mode(1);
@@ -95,8 +102,11 @@ int main()
       solver.set_trace(1);
       //    solver.figure()->add_trajectoryvector(&truth, "truth");
       list<TubeVector> l_solutions = solver.solve(x, f);
-      cout << "time " << (i+1)*step ;
-      if (l_solutions.size()==1) { cout << " volume " << l_solutions.front().volume() << endl;
+      //      list<TubeVector> l_solutions = solver.solve(x, &contract);
+      cout << "time " << (i+1)*step << endl ;
+      cout << l_solutions.size() << endl;
+      if (l_solutions.size()==1) 
+	{ cout << " volume " << l_solutions.front().volume() << endl;
 	volume+=l_solutions.front().volume();
 	totaltime+=solver.solving_time;
 	v[0]=l_solutions.front()[0].first_slice()->input_gate();
@@ -115,7 +125,7 @@ int main()
 
     return 0;
 
-  // Checking if this example still works:
+  // Checking if this example sill works:
   //return (l_solutions.size() == 1
     //       && solver.solutions_contain(l_solutions, truth) == YES) ? EXIT_SUCCESS : EXIT_FAILURE;
 }

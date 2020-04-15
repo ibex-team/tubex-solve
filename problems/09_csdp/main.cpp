@@ -87,7 +87,7 @@ int main()
     solver.set_propa_fxpt_ratio(0.99999);
 
     solver.set_var3b_fxpt_ratio(0.1);
-    //solver.set_var3b_fxpt_ratio(0.);
+    //    solver.set_var3b_fxpt_ratio(0.);
     
 
     solver.set_var3b_timept(2);
