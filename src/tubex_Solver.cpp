@@ -52,21 +52,23 @@ namespace tubex
 
   void Solver::set_propa_fxpt_ratio(float propa_fxpt_ratio)
   {
-    assert(Interval(0.,1.).contains(propa_fxpt_ratio));
+    //    assert(Interval(0.,1.).contains(propa_fxpt_ratio));
     m_propa_fxpt_ratio = propa_fxpt_ratio;
   }
 
   void Solver::set_var3b_fxpt_ratio(float var3b_fxpt_ratio)
   {
-    assert(Interval(0.,1.).contains(var3b_fxpt_ratio));
+    //    assert(Interval(0.,1.).contains(var3b_fxpt_ratio));
     m_var3b_fxpt_ratio = var3b_fxpt_ratio;
   }
 
+  /*
    void Solver::set_var3b_propa_fxpt_ratio(float var3b_propa_fxpt_ratio)
   {
     assert(Interval(0.,1.).contains(var3b_propa_fxpt_ratio));
     m_var3b_propa_fxpt_ratio = var3b_propa_fxpt_ratio;
   }
+  */
 
   void Solver::set_var3b_timept(int var3b_timept)
   {
@@ -334,7 +336,7 @@ std::pair<int,std::pair<ibex::Interval,double>> Solver::bisection_guess(TubeVect
       double volume_before_refining;
       
       //      cout << " before propagation " << x << endl;
-      //      propagation(x, ctc_func, m_propa_fxpt_ratio);
+
       if (level==0)
 	propagation(x, f, ctc_func, m_propa_fxpt_ratio, false, t_bisect);
       else
@@ -347,7 +349,7 @@ std::pair<int,std::pair<ibex::Interval,double>> Solver::bisection_guess(TubeVect
 	do
 	  { 
 	    // cout << " volume before var3b "  << x.volume() << endl;
-	    //	    var3b(x, ctc_func);
+
 	    var3b(x, f, ctc_func);
 	    // cout << " volume after var3b "  << x.volume() << endl;
 	    emptiness = x.is_empty();
@@ -365,7 +367,7 @@ std::pair<int,std::pair<ibex::Interval,double>> Solver::bisection_guess(TubeVect
 	//  cout << " volume before refining " <<  volume_before_refining << endl;
         // 1. Refining
 
-	if(m_refining_fxpt_ratio != 0.)
+	if(m_refining_fxpt_ratio > 0.)
 	  if (! refining(x))
 	    {
 	      if (m_trace)
@@ -378,11 +380,11 @@ std::pair<int,std::pair<ibex::Interval,double>> Solver::bisection_guess(TubeVect
 	// 3.      
 	emptiness = x.is_empty();
 	double volume_before_var3b;
-	if (!emptiness && m_var3b_fxpt_ratio){
+	if (!emptiness && m_var3b_fxpt_ratio >0.0){
 	  do
 	    { 
 	      // cout << " volume before var3b "  << x.volume() << endl;
-	      //	      var3b(x, ctc_func);
+
 	      var3b(x, f, ctc_func);
 	      // cout << " volume after var3b "  << x.volume() << endl;
 	      emptiness = x.is_empty();
@@ -699,80 +701,88 @@ std::pair<int,std::pair<ibex::Interval,double>> Solver::bisection_guess(TubeVect
 
   }
   */
+  void Solver::picard_contraction (TubeVector &x, tubex::Function& f){
+    if (x.volume()>= DBL_MAX){
+      //      cout << " volume before picard " << x.volume() << endl;
+      CtcPicard ctc_picard;
+  
+      ctc_picard.preserve_slicing(true);
+      ctc_picard.contract(f, x, FORWARD | BACKWARD);
+      //   cout << " volume after picard " << x.volume() << endl;
+    }
+  }
+
+  void Solver::deriv_contraction (TubeVector &x, tubex::Function& f){
+  CtcDeriv ctc;
+  //	    cout << " volume before ctc deriv " << volume_before_ctc << endl;
+  ctc.set_fast_mode(true);
+  ctc.contract(x, f.eval_vector(x),FORWARD | BACKWARD);
+  //	    cout << "volume after ctc deriv " << x.volume() << endl;
+  }
+
+  void Solver::integration_contraction(TubeVector &x, tubex::Function& f, double t0, bool incremental){
+    Ctc* ctc_dyncid;
+    CtcIntegration* ctc_integration;
+    if (m_contraction_mode==0)
+	//	ctc_dyncid =  new CtcDynBasic(f,1.e-8);
+	ctc_dyncid =  new CtcDynBasic(f);
+    else if (m_contraction_mode==1) 
+       	ctc_dyncid =  new CtcDynCid(f);
+    else if (m_contraction_mode==2)
+	//	ctc_dyncid =  new CtcDynCidGuess(f,1.e-8);
+      ctc_dyncid =  new CtcDynCidGuess(f);
+
+    ctc_dyncid->set_fast_mode(true);
+    ctc_integration = new CtcIntegration (f,ctc_dyncid);
+    if(x.volume() >= DBL_MAX) ctc_integration->set_picard_mode(true);
+
+
+    incremental=false ; // stronger contraction without incrementality ; comment this line for incrementality
+    TubeVector v = f.eval_vector(x);
+    if (incremental) // incrementality if incremental and no other function
+      {
+      ctc_integration->set_incremental_mode(true);
+      ctc_integration->contract(x,v,t0,FORWARD) ;
+      ctc_integration->contract(x,v,t0,BACKWARD) ;
+      }
+    else{
+
+      ctc_integration->set_incremental_mode(false);
+      ctc_integration->contract(x,v,x[0].domain().lb(),FORWARD);
+      ctc_integration->contract(x,v,x[0].domain().ub(),BACKWARD);
+    }
+    delete ctc_dyncid; delete ctc_integration;
+  }
+
+
 
   void Solver::propagation(TubeVector &x, tubex::Function* f, void (*ctc_func)(TubeVector&), float propa_fxpt_ratio, bool incremental, double t0 )
   {
-    if(propa_fxpt_ratio == 0.)
-      return;
-    
+    if  (propa_fxpt_ratio <0.0) return;
     double volume_before_ctc;
-    Ctc* ctc_dyncid;
-    CtcIntegration* ctc_integration;
-    if (f){
-      if (m_contraction_mode==0)
-	//	ctc_dyncid =  new CtcDynBasic(*f,1.e-8);
-	ctc_dyncid =  new CtcDynBasic(*f);
-      else if (m_contraction_mode==1) 
-       	ctc_dyncid =  new CtcDynCid(*f);
-      else if (m_contraction_mode==2)
-	//	ctc_dyncid =  new CtcDynCidGuess(*f,1.e-8);
-	ctc_dyncid =  new CtcDynCidGuess(*f);
-
-
-      if (m_contraction_mode <=2){
-	ctc_dyncid->set_fast_mode(true);
-	ctc_integration = new CtcIntegration (*f,ctc_dyncid);
-	if(x.volume() >= DBL_MAX) ctc_integration->set_picard_mode(true);
-      }
-    }
-
     do
       {
 	volume_before_ctc = x.volume();
-        if (ctc_func) ctc_func(x);  // Other constraints contraction
+        if (ctc_func) {ctc_func(x);  // Other constraints contraction
+	  incremental=false;}
 	if (f){                     // ODE contraction
 	  
-	  if (m_contraction_mode==4){   // CtcDeriv
-	    if (x.volume()>= DBL_MAX){
-	      cout << " volume before picard " << x.volume() << endl;
-	      CtcPicard ctc_picard;
-  
-	      ctc_picard.preserve_slicing(true);
-	      ctc_picard.contract(*f, x, FORWARD | BACKWARD);
-	      cout << " volume after picard " << x.volume() << endl;
-	    }
-
-	    CtcDeriv ctc;
-	    //	    cout << " volume before ctc deriv " << volume_before_ctc << endl;
-	    ctc.set_fast_mode(true);
-	    ctc.contract(x, f->eval_vector(x),FORWARD | BACKWARD);
-	    //	    cout << "volume after ctc deriv " << x.volume() << endl;
+	  if (m_contraction_mode==4){   // CtcPicard + CtcDeriv
+	    picard_contraction(x,*f);
+	    deriv_contraction(x,*f);
 	  }
     
-	  else{                           // CtcIntegration
-	  
-	    incremental=false ; // stronger contraction without incrementality ; comment this line for incrementality
-	    TubeVector v = f->eval_vector(x);
-	    if (incremental && ctc_func==NULL){ // incrementality if incremental and no other function
-	      ctc_integration->set_incremental_mode(true);
-	      ctc_integration->contract(x,v,t0,FORWARD) ;
-	      ctc_integration->contract(x,v,t0,BACKWARD) ;
-
-	    }
-	    else{
-
-	      ctc_integration->set_incremental_mode(false);
-	      ctc_integration->contract(x,v,x[0].domain().lb(),FORWARD);
-	      ctc_integration->contract(x,v,x[0].domain().ub(),BACKWARD);
-	    }
+	  else if (m_contraction_mode <=2 ){                           // CtcIntegration
+	    integration_contraction(x,*f,t0,incremental);
 	  }
 	  //	  cout << " tube after contraction " << x << " volume after " << x.volume() << endl;
 	}
       }
 
-    while(!(x.is_empty())
+    while(!(x.is_empty()) 
+	  && propa_fxpt_ratio >0
 	  && !fixed_point_reached(volume_before_ctc, x.volume(), propa_fxpt_ratio));
-    if (m_contraction_mode <=2) {delete ctc_dyncid; delete ctc_integration;}
+
   }
 
 
@@ -782,12 +792,13 @@ std::pair<int,std::pair<ibex::Interval,double>> Solver::bisection_guess(TubeVect
 
   void Solver::var3b(TubeVector &x, tubex::Function * f,void (*ctc_func)(TubeVector&) )
   {
-    if(m_var3b_fxpt_ratio == 0. || x.volume() >= DBL_MAX)
+    if(m_var3b_fxpt_ratio < 0. || x.volume() >= DBL_MAX)
       return;
 
     int contraction_mode = m_contraction_mode;
     m_contraction_mode=4;  // var3B calls CtcDeriv as internal contractor 
-    // incremental contractors are too weak and CtcIntegration with CtcDyncid or CtcDyncidGuess are too costly
+    // incremental contractors using CtcIntegration are too weak and non incremental contractors as
+    // CtcIntegration with CtcDyncid or CtcDyncidGuess are too costly
     
     double t_bisection;
     if (m_var3b_timept==1)

@@ -84,10 +84,11 @@ int main()
     //    solver.set_refining_fxpt_ratio(0.99999);
     //    solver.set_refining_fxpt_ratio(0.999);
     solver.set_refining_fxpt_ratio(2.0);
-    solver.set_propa_fxpt_ratio(0.99999);
+    //    solver.set_propa_fxpt_ratio(0.99999);
+    solver.set_propa_fxpt_ratio(0);
 
-    solver.set_var3b_fxpt_ratio(0.1);
-    //    solver.set_var3b_fxpt_ratio(0.);
+    //    solver.set_var3b_fxpt_ratio(0.1);
+    solver.set_var3b_fxpt_ratio(-1);
     
 
     solver.set_var3b_timept(2);

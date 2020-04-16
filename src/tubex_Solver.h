@@ -41,31 +41,41 @@ namespace tubex
       void set_refining_fxpt_ratio(float refining_fxpt_ratio);
       void set_propa_fxpt_ratio(float propa_fxpt_ratio);
       void set_var3b_fxpt_ratio(float var3b_fxpt_ratio);
-      void set_var3b_propa_fxpt_ratio(float var3b_propa_fxpt_ratio);
+      //      void set_var3b_propa_fxpt_ratio(float propa_fxpt_ratio);
 
       // Slice choice for var3b
       void set_var3b_timept(int var3b_timept); // where do the var3b contraction : 1 domain.ub(); -1 domain.lb(); 0 max_diam_gate(); 2 randomly domain.ub() or domain.lb()
 
       // Slice choice for bisection
-      void set_bisection_timept (int bisection_timept); // where to bisect : 1 domain.ub(); -1 domain.lb(); 0 max_diam_gate(); 2 randomly domain.ub() or domain.lb(); 3 round robin  domain.ub() and domain.lb()
+      void set_bisection_timept (int bisection_timept); // where to bisect : 1 domain.ub(); -1 domain.lb(); 0 max_diam_gate(); 2 randomly domain.ub() or domain.lb(); 3 round robin  domain.ub() and domain.lb() ; -2 no bisection
 
       // no more refining when  max_slices is  reached
       void set_max_slices(int max_slices); 
 
       // refining mode : which slices to refine
-      void set_refining_mode(int refining_mode); // 0 : all slices ; 1 : one slice ; 2 : the slices with a difference between input and output gates greater more than average ; 3 : the slices with with a difference between input and output gates greater more than the median.
+      void set_refining_mode(int refining_mode); // 0 : all slices ; 1 : one slice ; 2 : the slices with a difference between input and output gates greater  than average ; 3 : the slices with with a difference between input and output gates greater  than the median.
  
       // contraction mode :
       void set_contraction_mode(int contraction_mode) ; // 0 for CtcDynBasic, 1 for CtcDynCid, 2 for CtcDynCidGuess, 4 for CtcDeriv
       void set_trace(int trace);
       double solving_time;
 
+      /* the solve method, it as for parameters a tube vector x0 , and 3 possibilities
+         -  a tube vector contractor ctc_func (for general problems as Integrodifferential problems)
+         - a differential function (tubex::Function computing the derivative of a tube vector) (for pure ODEs)
+         - a differential function and a tube vector contractor (for ODE problems with side constraints)
+
+         The returned results are tubes containing the solutions. Two tubes have at least a disjoint gate.
+      */
+
+
       const std::list<TubeVector> solve(const TubeVector& x0, void (*ctc_func)(TubeVector&));
       const std::list<TubeVector> solve(const TubeVector& x0, tubex::Function & f,void (*ctc_func)(TubeVector&)=NULL );
       const std::list<TubeVector> solve(const TubeVector& x0, tubex::Function* f,void (*ctc_func)(TubeVector&));
+
       VIBesFigTubeVector* figure();
       static const ibex::BoolInterval solutions_contain(const std::list<TubeVector>& l_solutions, const TrajectoryVector& truth);
-      void (*ctc_func) (TubeVector&);
+      //      void (*ctc_func) (TubeVector&);
 
   protected:
       bool empty_intersection(TubeVector& t1, TubeVector& t2);
@@ -74,7 +84,9 @@ namespace tubex
       bool stopping_condition_met(const TubeVector& x);
       bool fixed_point_reached(double volume_before, double volume_after, float fxpt_ratio);
       void propagation(TubeVector &x, tubex::Function* f, void (*ctc_func)(TubeVector&), float propa_fxpt_ratio, bool incremental, double t0);
-
+      void deriv_contraction (TubeVector &x, tubex::Function& f);
+      void integration_contraction(TubeVector &x, tubex::Function& f, double t0, bool incremental);
+      void picard_contraction (TubeVector &x, tubex::Function& f);
       void var3b(TubeVector &x,tubex::Function* f, void (*ctc_func)(TubeVector&));
       bool refining (TubeVector &x);
       double refining_threshold(const TubeVector &x, 
@@ -85,7 +97,7 @@ std::pair<int,std::pair<ibex::Interval,double>> bisection_guess(TubeVector& x, T
       float m_refining_fxpt_ratio = 0.005;
       float m_propa_fxpt_ratio = 0.005;
       float m_var3b_fxpt_ratio = 0.005;
-      float m_var3b_propa_fxpt_ratio = 0.005;
+      //      float m_var3b_propa_fxpt_ratio = 0.005;
       /* Internal parameters for var3b algorithm */
       float m_var3b_bisection_minrate = 0.0001;
       float m_var3b_bisection_maxrate = 0.4;
