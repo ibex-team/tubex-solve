@@ -41,7 +41,7 @@ namespace tubex
       void set_refining_fxpt_ratio(float refining_fxpt_ratio);
       void set_propa_fxpt_ratio(float propa_fxpt_ratio);
       void set_var3b_fxpt_ratio(float var3b_fxpt_ratio);
-      //      void set_var3b_propa_fxpt_ratio(float propa_fxpt_ratio);
+      void set_var3b_propa_fxpt_ratio(float propa_fxpt_ratio);
 
       // Slice choice for var3b
       void set_var3b_timept(int var3b_timept); // where do the var3b contraction : 1 domain.ub(); -1 domain.lb(); 0 max_diam_gate(); 2 randomly domain.ub() or domain.lb()
@@ -89,15 +89,23 @@ namespace tubex
       void picard_contraction (TubeVector &x, tubex::Function& f);
       void var3b(TubeVector &x,tubex::Function* f, void (*ctc_func)(TubeVector&));
       bool refining (TubeVector &x);
-      double refining_threshold(const TubeVector &x, 
+      double average_refining_threshold(const TubeVector &x, 
 				vector<double>& slice_step, vector<double>& t_refining);
+      double median_refining_threshold(const TubeVector &x, 
+				vector<double>& slice_step, vector<double>& t_refining);
+      bool refining_with_threshold(TubeVector & v, int nb_slices);
+
+
       void bisection_guess (TubeVector & x, tubex::Function& f);
-std::pair<int,std::pair<ibex::Interval,double>> bisection_guess(TubeVector& x, TubeVector& v, tubex::Function& fnc);
+      std::pair<int,std::pair<ibex::Interval,double>> bisection_guess(TubeVector& x, TubeVector& v, tubex::Function& fnc);
+      std::pair<int,std::pair<double,double>> bisection_guess(TubeVector x, TubeVector v, Ctc* slice_ctr, tubex::Function& fnc);
+
+
       ibex::Vector m_max_thickness = ibex::Vector(1);
       float m_refining_fxpt_ratio = 0.005;
-      float m_propa_fxpt_ratio = 0.005;
-      float m_var3b_fxpt_ratio = 0.005;
-      //      float m_var3b_propa_fxpt_ratio = 0.005;
+      float m_propa_fxpt_ratio = 0.0 ;
+      float m_var3b_fxpt_ratio = 0.0; // one call no fix point
+      float m_var3b_propa_fxpt_ratio = 0.0;
       /* Internal parameters for var3b algorithm */
       float m_var3b_bisection_minrate = 0.0001;
       float m_var3b_bisection_maxrate = 0.4;
