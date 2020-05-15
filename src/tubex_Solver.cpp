@@ -123,22 +123,30 @@ namespace tubex
     else if 
       (m_refining_mode==0)
       { // all slices are refined 
+
 	
-	vector<double> t_refining;
-
+	for (int i=0; i<x.size();i++)
+	  {
+	    int k=0;
+	    for ( Slice*s= x[i].first_slice(); s!=NULL; s=s->next_slice()){
+	      if (k+nb_slices >= m_max_slices) break;
+	      x[i].sample(s->domain().mid(),s);
+	      s=s->next_slice();
+	      k++;
+	    }
+	  }
+	
+	/*
+	int k=0;
 	for (const Slice*s= x[0].first_slice(); s!=NULL; s=s->next_slice()){
-	  t_refining.push_back(s->domain().mid());
-
-	}
-	//	cout << " refining " << t_refining.size() << endl;
-
-	for (int k=0; k<t_refining.size(); k++){
 	  if (k+nb_slices >= m_max_slices) break;
-	  x.sample(t_refining[k]);
+	  x.sample(s->domain().mid());
+	  s=s->next_slice();
+	  k++;
 	}
+	*/
 	return true;
       }
-	    
     else if (m_refining_mode== 2 || m_refining_mode== 3)
       return refining_with_threshold(x, nb_slices);
 
@@ -155,16 +163,35 @@ namespace tubex
       if (m_refining_mode==2) step_threshold= average_refining_threshold(x, slice_step, t_refining);
       else if (m_refining_mode==3) step_threshold= median_refining_threshold(x, slice_step, t_refining);
       //cout << " step threshold " << step_threshold << " nb_slices " << nb_slices << endl;
-     
+      
+      for (int i=0; i<x.size();i++)
+	  {
+	    int k=0; int new_slices=0;
+	    for ( Slice*s= x[i].first_slice(); s!=NULL; s=s->next_slice()){
+	      if (new_slices +nb_slices >= m_max_slices) break;
+	      if (slice_step[k] >= step_threshold){
+		x[i].sample(s->domain().mid(),s);
+		s=s->next_slice();
+		new_slices++;
+	      }
+	      k++;
+	    }
+	  }
+
+      
+
+      /*
       int new_slices=0;
       for (int k=0; k<t_refining.size(); k++){
 	//	cout << "refining " << t_refining[k] << " " << slice_step[k] << endl;
+	
 	if( (nb_slices + new_slices) >= m_max_slices) break;
 	if (slice_step[k] >= step_threshold)
 	  {//cout << "refining+ " << t_refining[k] << endl;
 	      x.sample(t_refining[k]); new_slices++;
 	    }
       }
+      */
       if (nb_slices < m_max_slices && x[0].nb_slices() == nb_slices)  // patch to avoid infinite loops (the selected slices could not be bisected)
 	for (int k=0; k<t_refining.size(); k++){
 	  //cout << " sample " << k << endl;
@@ -249,7 +276,7 @@ namespace tubex
   void Solver::bisection_guess (TubeVector & x, tubex::Function& f){
     TubeVector v = f.eval_vector(x);
     CtcDynCid ctc(f);
-    std::pair< int,std::pair<double,double> > guess = bisection_guess (x,v,&ctc,f);
+    std::pair< int,std::pair<double,double> > guess = bisection_guess (x,v,&ctc,f,2);
     cout << " var " << guess.first << " time  " << guess.second.first << " point " << guess.second.second <<  endl;
     if (guess.first >= 0 && x.size() > 1) {
       cout << " var 0  " <<  *(x[0].first_slice()) <<  endl;
@@ -263,13 +290,20 @@ namespace tubex
   }
 
   
-std::pair<int,std::pair<ibex::Interval,double>> Solver::bisection_guess(TubeVector& x, TubeVector& v, tubex::Function& fnc){
 
-		/*variable  domain - bisection point*/
-		pair <int, pair <ibex::Interval,double> > bisection;
+  std::pair<int,std::pair<double,double>> Solver::bisection_guess(TubeVector x, TubeVector v, Ctc* slice_ctr, tubex::Function& fnc, int variant){
+    //variant 0 -> return immediately as soon as we find a potential gate
+		//variant 1 -> return the largest gate in a slice
+		//variant 2 -> return the largest gate in the complete tube
+
+		/*variable - time of bisection - bisection point*/
+		pair <int, pair <double,double> > bisection;
+
+		double t_bisection;  //time of bisection (in t)
+		double x_bisection; // value of bisection (in x)
 
 		/*init pair*/
-		bisection = make_pair(-1,make_pair(Interval(-1,-1),-1));
+		bisection = make_pair(-1,make_pair(-1,-1));
 
 		/*check if everything is ok*/
 		assert(x.size() == v.size());
@@ -279,61 +313,126 @@ std::pair<int,std::pair<ibex::Interval,double>> Solver::bisection_guess(TubeVect
 		/*init all the tubes*/
 		vector<Slice*> x_slice;
 		vector<Slice*> v_slice;
+		/*auxiliar tubes*/
+		vector<Slice*> aux_x_slice; TubeVector aux_x = x;
+		vector<Slice*> aux_v_slice; TubeVector aux_v = v;
 
-		/*push slices*/
-		for (int i = 0 ; i < x.size() ; i++){
-			x_slice.push_back(x[i].first_slice());
-			v_slice.push_back(v[i].first_slice());
-		}
 
-		/*Contractor deriv*/
-		CtcDeriv ctc_deriv;
+		double max_diameter = -1;
+		double gate_diam;
+		for (int it = 0 ; it < 2 ; it++){
 
-		while(x_slice[0] != NULL){
+			/*push slices for forward phase*/
+			x_slice.clear(); v_slice.clear();
+			aux_x_slice.clear(); aux_v_slice.clear();
 
-			for (int i = 0 ; i < x.size(); i++){
-
-				vector<Slice> x_slice_aux;
-				vector<Slice> v_slice_aux;
-				for (int j = 0 ; j < x_slice.size() ; j++){
-					x_slice_aux.push_back(*x_slice[i]);
-					v_slice_aux.push_back(*v_slice[i]);
+			//for forward
+			TPropagation t_propa;
+			if (it == 0){
+				t_propa = FORWARD;
+				for (int i = 0 ; i < x.size() ; i++){
+					x_slice.push_back(x[i].first_slice());
+					v_slice.push_back(v[i].first_slice());
+					aux_x_slice.push_back(aux_x[i].first_slice());
+					aux_v_slice.push_back(aux_v[i].first_slice());
 				}
-				double point  = x_slice[i]->output_gate().mid();
-				x_slice_aux[i].set_output_gate(point);
-				for (int j = 0 ;  j < x_slice.size() ; j++){
-					double sx;
-					do
-					{
-						sx = x_slice_aux[j].volume();
-						ctc_deriv.contract(x_slice_aux[j], v_slice_aux[j], FORWARD);
+			}
+			//for backward
+			else{
+				t_propa = BACKWARD;
+				for (int i = 0 ; i < x.size() ; i++){
+					x_slice.push_back(x[i].last_slice());
+					v_slice.push_back(v[i].last_slice());
+					aux_x_slice.push_back(aux_x[i].last_slice());
+					aux_v_slice.push_back(aux_v[i].last_slice());
+				}
+			}
 
-						/*evaluation*/
-						IntervalVector envelope(x_slice.size());
+			while (x_slice[0] != NULL){
+				for (int i = 0 ; i < x.size() ; i++){
+					if (t_propa & FORWARD){
+						x_bisection = aux_x_slice[i]->output_gate().mid();
+						t_bisection = aux_x_slice[i]->domain().ub();
+						gate_diam = aux_x_slice[i]->output_gate().diam();
+						aux_x_slice[i]->set_output_gate(x_bisection);
+					}
+					else if (t_propa & BACKWARD){
+						x_bisection = aux_x_slice[i]->input_gate().mid();
+						t_bisection = aux_x_slice[i]->domain().lb();
+						gate_diam = aux_x_slice[i]->input_gate().diam();
+						aux_x_slice[i]->set_input_gate(x_bisection);
+					}
+					if(dynamic_cast <CtcDynCid*> (slice_ctr)){
+						CtcDynCid * cid = dynamic_cast <CtcDynCid*> (slice_ctr);
+						cid->contract(aux_x_slice,aux_v_slice,t_propa);
+					}
 
-						for (int k = 0 ; k < x_slice.size() ; k++)
-								envelope[k] = x_slice_aux[k].codomain();
-						v_slice_aux[j].set_envelope(fnc.eval_slice(x_slice_aux[j].domain(),envelope)[j]);
+					else if(dynamic_cast <CtcDynCidGuess*> (slice_ctr)){
+						CtcDynCidGuess * cidguess = dynamic_cast <CtcDynCidGuess*> (slice_ctr);
+						cidguess->contract(aux_x_slice,aux_v_slice,t_propa);
+					}
+					else if(dynamic_cast <CtcDynBasic*> (slice_ctr)){
+						CtcDynBasic * basic = dynamic_cast <CtcDynBasic*> (slice_ctr);
+						basic->contract(aux_x_slice,aux_v_slice,t_propa);
+					}
 
-					} while(sx-x_slice_aux[j].volume()>0);
+					for (int k = 0 ; k < aux_x_slice.size() ; k++){
+						if (aux_x_slice[k]->is_empty()){
+							if (variant == 0){
+								bisection.first = i;
+								bisection.second.first = t_bisection;
+								bisection.second.second = x_bisection;
+								return bisection;
+							}
+							else {
+								if (gate_diam > max_diameter){
+									bisection.first = i;
+									bisection.second.first = t_bisection;
+									bisection.second.second = x_bisection;
+									max_diameter = gate_diam;
+									break;
+								}
+							}
+						}
+					}
+					//restore domains
+					for (int k = 0 ; k < aux_x_slice.size() ; k++){
+						aux_x_slice[k]->set_envelope(x_slice[k]->codomain());
+						aux_x_slice[k]->set_input_gate(x_slice[k]->input_gate());
+						aux_x_slice[k]->set_output_gate(x_slice[k]->output_gate());
+					}
+				}
 
-					if (x_slice_aux[j].is_empty()){
-						bisection = make_pair(i,make_pair(x_slice_aux[j].domain(),point));
+				if (variant == 1){
+					if (bisection.first != -1)
 						return bisection;
+				}
+
+				if (t_propa & FORWARD){
+					for (int i = 0 ; i < x.size() ; i++){
+						x_slice[i] = x_slice[i]->next_slice();
+						v_slice[i] = v_slice[i]->next_slice();
+						aux_x_slice[i] = aux_x_slice[i]->next_slice();
+						aux_v_slice[i] = aux_v_slice[i]->next_slice();
+					}
+				}
+				else if (t_propa & BACKWARD){
+					for (int i = 0 ; i < x.size() ; i++){
+						x_slice[i] = x_slice[i]->prev_slice();
+						v_slice[i] = v_slice[i]->prev_slice();
+						aux_x_slice[i] = aux_x_slice[i]->prev_slice();
+						aux_v_slice[i] = aux_v_slice[i]->prev_slice();
 					}
 				}
 			}
-
-			/*move to the next slice*/
-			for (int i = 0 ; i < x.size() ; i++){
-				x_slice[i] = x_slice[i]->next_slice();
-				v_slice[i] = v_slice[i]->next_slice();
-			}
 		}
-
-		/*there is not candidate to bisect, return -1 at variable*/
+		/*if variant 2 is selected, it will return here*/
 		return bisection;
 	}
+
+
+
+
 
   std::pair<int,std::pair<double,double>> Solver::bisection_guess(TubeVector x, TubeVector v, Ctc* slice_ctr, tubex::Function& fnc){
 
@@ -837,63 +936,37 @@ std::pair<int,std::pair<ibex::Interval,double>> Solver::bisection_guess(TubeVect
     int n = m_max_thickness.size();
     return (std::pow(volume_after, 1./n) / std::pow(volume_before, 1./n)) >= fxpt_ratio;
   }
-  /*
-  void Solver::propagation(TubeVector &x, void (*ctc_func)(TubeVector&), float propa_fxpt_ratio)
-  {
-    assert(Interval(0.,1.).contains(propa_fxpt_ratio));
 
-    if(propa_fxpt_ratio == 0.)
-      return;
-    
-    bool emptiness;
-    double volume_before_ctc;
-    int nb_iter=0;
-    do
-    {
-      volume_before_ctc = x.volume();
-      //      cout << " volume before ctc " << volume_before_ctc << endl;
-      ctc_func(x);
-      //      cout << "volume after ctc " << x.volume() << endl;
-      emptiness = x.is_empty();
-      nb_iter++;
-    } 
-    while(!emptiness
-	  //          && !stopping_condition_met(x)
-         && !fixed_point_reached(volume_before_ctc, x.volume(), propa_fxpt_ratio));
-
-  }
-  */
   void Solver::picard_contraction (TubeVector &x, tubex::Function& f){
     if (x.volume()>= DBL_MAX){
       //      cout << " volume before picard " << x.volume() << endl;
       CtcPicard ctc_picard;
-  
-      ctc_picard.preserve_slicing(false);
+      ctc_picard.preserve_slicing(true);
       ctc_picard.contract(f, x, FORWARD | BACKWARD);
       //   cout << " volume after picard " << x.volume() << endl;
     }
   }
 
   void Solver::deriv_contraction (TubeVector &x, tubex::Function& f){
-  CtcDeriv ctc;
-  //	    cout << " volume before ctc deriv " << volume_before_ctc << endl;
-  ctc.set_fast_mode(true);
-  ctc.contract(x, f.eval_vector(x),FORWARD | BACKWARD);
-  //	    cout << "volume after ctc deriv " << x.volume() << endl;
+    CtcDeriv ctc;
+    //	    cout << " volume before ctc deriv " << volume_before_ctc << endl;
+    ctc.set_fast_mode(true);
+    ctc.contract(x, f.eval_vector(x),FORWARD | BACKWARD);
+    //	    cout << "volume after ctc deriv " << x.volume() << endl;
   }
 
   void Solver::integration_contraction(TubeVector &x, tubex::Function& f, double t0, bool incremental){
     Ctc* ctc_dyncid;
     CtcIntegration* ctc_integration;
     if (m_contraction_mode==0)
-	//	ctc_dyncid =  new CtcDynBasic(f,1.e-8);
-	ctc_dyncid =  new CtcDynBasic(f);
+      ctc_dyncid =  new CtcDynBasic(f);
     else if (m_contraction_mode==1) 
-       	ctc_dyncid =  new CtcDynCid(f);
-    else if (m_contraction_mode==2)
-      //      ctc_dyncid =  new CtcDynCidGuess(f,1.e-8);
+      ctc_dyncid =  new CtcDynCid(f);
+    else if (m_contraction_mode==2){
       ctc_dyncid =  new CtcDynCidGuess(f);
-
+      // (dynamic_cast <CtcDynCidGuess*> (ctc_dyncid))->set_propagation_engine(1);
+    }
+  
     ctc_dyncid->set_fast_mode(true);
     ctc_integration = new CtcIntegration (f,ctc_dyncid);
     if(x.volume() >= DBL_MAX) ctc_integration->set_picard_mode(true);
@@ -907,13 +980,15 @@ std::pair<int,std::pair<ibex::Interval,double>> Solver::bisection_guess(TubeVect
       ctc_integration->contract(x,v,t0,FORWARD) ;
       ctc_integration->contract(x,v,t0,BACKWARD) ;
       }
-
-    else{
-
+    else
+      {
       ctc_integration->set_incremental_mode(false);
+      //      cout << " x before " << x << endl;
       ctc_integration->contract(x,v,x[0].domain().lb(),FORWARD);
+      //      cout << " x after forward " << x << endl;
       ctc_integration->contract(x,v,x[0].domain().ub(),BACKWARD);
-    }
+      //      cout << " x after backward " << x << endl;
+      }
     delete ctc_dyncid; delete ctc_integration;
   }
 

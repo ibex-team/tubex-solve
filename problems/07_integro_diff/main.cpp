@@ -109,7 +109,8 @@ int main()
 
     Vector epsilon(n, 0.02);
     Interval domain(0.,1.);
-    TubeVector x(domain, n);    TrajectoryVector truth1(domain, tubex::Function("(exp(-t)*(-(cos(2*t)*(-1 + cos(4) + 2*sin(4) + 4*exp(1)*sqrt(2*(1 + cos(4) + 2*exp(2) - sin(4))))) + sin(2*t)*(2 + 2*cos(4) - sin(4) + 2*exp(1)*(2*exp(1) + sqrt(2*(1 + cos(4) + 2*exp(2) - sin(4)))))))/(5 + 3*cos(4) + 8*exp(2) - 4*sin(4))"));
+    TubeVector x(domain, n);
+    TrajectoryVector truth1(domain, tubex::Function("(exp(-t)*(-(cos(2*t)*(-1 + cos(4) + 2*sin(4) + 4*exp(1)*sqrt(2*(1 + cos(4) + 2*exp(2) - sin(4))))) + sin(2*t)*(2 + 2*cos(4) - sin(4) + 2*exp(1)*(2*exp(1) + sqrt(2*(1 + cos(4) + 2*exp(2) - sin(4)))))))/(5 + 3*cos(4) + 8*exp(2) - 4*sin(4))"));
     TrajectoryVector truth2(domain, tubex::Function("(exp(-t)*(-(cos(2*t)*(-1 + cos(4) + 2*sin(4) - 4*exp(1)*sqrt(2*(1 + cos(4) + 2*exp(2) - sin(4))))) + sin(2*t)*(2 + 2*cos(4) + 4*exp(2) - sin(4) - 2*exp(1)*sqrt(2*(1 + cos(4) + 2*exp(2) - sin(4))))))/(5 + 3*cos(4) + 8*exp(2) - 4*sin(4))"));
 
   /* =========== SOLVER =========== */
@@ -129,7 +130,7 @@ int main()
     solver.set_refining_mode(0);
     solver.set_var3b_timept(0);
     solver.set_bisection_timept(0);
-
+    solver.set_contraction_mode(4);
     //    solver.figure()->add_trajectoryvector(&truth1, "truth1");
     //    solver.figure()->add_trajectoryvector(&truth2, "truth2");
     list<TubeVector> l_solutions = solver.solve(x, &contract);

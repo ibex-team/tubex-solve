@@ -83,22 +83,22 @@ int main()
       double t0=tf-(i+1)*step;
       double t1=tf-i*step;
       Interval domain(t0,t1);
-      TubeVector x(domain, step/5, 1);
+      TubeVector x(domain, step, 1);
       // TubeVector x(domain, step, 1);
       x.set(v,t1 ); // final condition at t1
 
       tubex::Solver solver(epsilon);
       //      solver.set_refining_fxpt_ratio(0.999);
       solver.set_refining_fxpt_ratio(2.0);
-      //      solver.set_propa_fxpt_ratio(0.999);
+      //      solver.set_propa_fxpt_ratio(0.99);
       solver.set_propa_fxpt_ratio(0);
-      //solver.set_propa_fxpt_ratio(0.1);
-      //solver.set_var3b_fxpt_ratio(0.999);
-      solver.set_var3b_fxpt_ratio(0.);
-      solver.set_bisection_timept(1);
-      solver.set_var3b_timept(-1);
+      solver.set_var3b_propa_fxpt_ratio(0.99);
+      //solver.set_var3b_fxpt_ratio(0.99);
+      solver.set_var3b_fxpt_ratio(-1.);
+      solver.set_bisection_timept(-2);
+      solver.set_var3b_timept(0);
       solver.set_refining_mode(0);
-      solver.set_contraction_mode(1);
+      solver.set_contraction_mode(2);
       solver.set_max_slices(40000);
       solver.set_trace(1);
       //    solver.figure()->add_trajectoryvector(&truth, "truth");

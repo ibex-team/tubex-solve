@@ -72,17 +72,20 @@ int main()
     solver.set_refining_fxpt_ratio(2.0);
    
     //    solver.set_propa_fxpt_ratio(0.9999);
-    solver.set_propa_fxpt_ratio(0);
-    //    solver.set_var3b_fxpt_ratio(0.9);
-    solver.set_var3b_fxpt_ratio(-1);
+    //    solver.set_propa_fxpt_ratio(0.99);
+    solver.set_propa_fxpt_ratio(0.);
+    solver.set_var3b_fxpt_ratio(0.99);
+      solver.set_var3b_propa_fxpt_ratio(0.99);
+    //    solver.set_var3b_fxpt_ratio(-1);
 
 
     solver.set_var3b_timept(1);
     solver.set_trace(1);
-    solver.set_max_slices(10000);
-    solver.set_refining_mode(2);
+    solver.set_max_slices(20000);
+    solver.set_refining_mode(0);
     solver.set_contraction_mode(2);
     solver.set_bisection_timept(-2);
+
     //    solver.figure()->add_trajectoryvector(&truth1, "truth1");
     //    solver.figure()->add_trajectoryvector(&truth2, "truth2");
     list<TubeVector> l_solutions = solver.solve(x, f);

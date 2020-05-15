@@ -12,6 +12,7 @@
 
 #include "tubex.h"
 #include "tubex-solve.h"
+#include<float.h>
 
 using namespace std;
 using namespace ibex;
@@ -60,8 +61,10 @@ int main()
     Tube::enable_syntheses(false);
     int n = 2;
     Interval domain(0.,6.);
-    TubeVector x(domain, 0.003, IntervalVector(n, Interval(-9999.,9999.))); // todo: remove bounds
-    //    TubeVector x(domain, 0.1, IntervalVector(n, Interval(-9999.,9999.))); // todo: remove bounds
+    //    TubeVector x(domain, 0.003, IntervalVector(n, Interval(-9999.,9999.))); // todo: remove bounds
+    //TubeVector x(domain, 0.1, IntervalVector(n, Interval(-9999.,9999.))); // todo: remove bounds
+    TubeVector x(domain, 6., IntervalVector(n, Interval(-9999.,9999.))); // todo: remove bounds
+    //    TubeVector x(domain, 6., IntervalVector(n, Interval(-1.e100,1.e100))); // no contraction with infinite bounds
     
     //Vector epsilon(n); epsilon[0] = 0.15; epsilon[1] = 0.15;
     //    Vector epsilon(n); epsilon[0] = 0.03; epsilon[1] = 0.03;
@@ -84,19 +87,18 @@ int main()
     //    solver.set_refining_fxpt_ratio(0.99999);
     //    solver.set_refining_fxpt_ratio(0.999);
     solver.set_refining_fxpt_ratio(2.0);
-    //    solver.set_propa_fxpt_ratio(0.99999);
-    solver.set_propa_fxpt_ratio(0);
+    //    solver.set_propa_fxpt_ratio(0.99);
+    solver.set_propa_fxpt_ratio(0.);
 
-    solver.set_var3b_fxpt_ratio(0.1);
-    solver.set_var3b_propa_fxpt_ratio(0.999);
-    //    solver.set_var3b_fxpt_ratio(-1);
+    solver.set_var3b_fxpt_ratio(0.99);
+    solver.set_var3b_propa_fxpt_ratio(0.99);
+    //solver.set_var3b_fxpt_ratio(-1);
     
-
-    solver.set_var3b_timept(2);
+    solver.set_var3b_timept(0);
  
     solver.set_trace(1);
     solver.set_max_slices(40000);
-    solver.set_refining_mode(3);
+    solver.set_refining_mode(0);
     solver.set_contraction_mode(2);
     solver.set_bisection_timept(-2);
     // Displaying the additional restriction:

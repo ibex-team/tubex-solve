@@ -35,18 +35,18 @@ void contract(TubeVector& x)
     TubeVector v = f.eval_vector(x);
     
     
-      CtcDeriv ctc_deriv;
-      ctc_deriv.set_fast_mode(true);
-      ctc_deriv.contract(x, v);
-      v=f.eval_vector(x);
+    CtcDeriv ctc_deriv;
+    ctc_deriv.set_fast_mode(true);
+    ctc_deriv.contract(x, v);
+    v=f.eval_vector(x);
       
-      //      CtcDynCid* ctc_dyncid = new CtcDynCid(f1);     
-      CtcDynCidGuess* ctc_dyncid = new CtcDynCidGuess(f);     
-      ctc_dyncid->set_fast_mode(true);
-      CtcIntegration ctc_integration(f,ctc_dyncid);
-      ctc_integration.contract(x,v,x[0].domain().lb(),FORWARD) ;
-      ctc_integration.contract(x,v,x[0].domain().ub(),BACKWARD) ;
-      delete ctc_dyncid;
+    //      CtcDynCid* ctc_dyncid = new CtcDynCid(f1);     
+    CtcDynCidGuess* ctc_dyncid = new CtcDynCidGuess(f);     
+    ctc_dyncid->set_fast_mode(true);
+    CtcIntegration ctc_integration(f,ctc_dyncid);
+    ctc_integration.contract(x,v,x[0].domain().lb(),FORWARD) ;
+    ctc_integration.contract(x,v,x[0].domain().ub(),BACKWARD) ;
+    delete ctc_dyncid;
  
     }
 }
@@ -78,12 +78,13 @@ int main()
     //    solver.set_refining_fxpt_ratio(0.9999);
     //    solver.set_refining_fxpt_ratio(0.9995);
     solver.set_refining_fxpt_ratio(2.0);
-    solver.set_propa_fxpt_ratio(0.99);
-    //    solver.set_propa_fxpt_ratio(0.99);
+    solver.set_propa_fxpt_ratio(0.);
+    //solver.set_propa_fxpt_ratio(0.99);
+    // solver.set_propa_fxpt_ratio(0.);
     //       solver.set_propa_fxpt_ratio(0.1);
-    //    solver.set_var3b_fxpt_ratio(0.99);
+    solver.set_var3b_fxpt_ratio(0.99);
     solver.set_var3b_fxpt_ratio(-1);
-    solver.set_var3b_propa_fxpt_ratio(0.99);
+    //solver.set_var3b_propa_fxpt_ratio(0.99);
 
     solver.set_trace(1);
     solver.set_var3b_timept(0);

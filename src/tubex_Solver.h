@@ -97,9 +97,8 @@ namespace tubex
 
 
       void bisection_guess (TubeVector & x, tubex::Function& f);
-      std::pair<int,std::pair<ibex::Interval,double>> bisection_guess(TubeVector& x, TubeVector& v, tubex::Function& fnc);
+      std::pair<int,std::pair<double,double>> bisection_guess(TubeVector x, TubeVector v, Ctc* slice_ctr, tubex::Function& fnc, int variant);
       std::pair<int,std::pair<double,double>> bisection_guess(TubeVector x, TubeVector v, Ctc* slice_ctr, tubex::Function& fnc);
-
 
       ibex::Vector m_max_thickness = ibex::Vector(1);
       float m_refining_fxpt_ratio = 0.005;

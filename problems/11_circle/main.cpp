@@ -57,7 +57,7 @@ int main()
     x.set(v, 0.); // ini
     cout << x[0](0.) << " "  << x[1](0.) << endl;
 
-    double eps=0.003;
+    double eps=0.002;
     double step=pi;
     int nbsteps=1;
   /* =========== SOLVER =========== */
@@ -67,20 +67,21 @@ int main()
       double t0=i*step;
       double t1=(i+1)*step;
       Interval domain(t0,t1);
-      TubeVector x(domain, 0.001, 2);
+      TubeVector x(domain, step, 2);
       //      TubeVector x(domain, 0.1, 2);
       x.set(v,t0 ); // initial condition
       tubex::Solver solver(epsilon);
       solver.set_refining_fxpt_ratio(2.);
-    //solver.set_refining_fxpt_ratio(0.9999);
-      //     solver.set_propa_fxpt_ratio(0.99);
-     solver.set_propa_fxpt_ratio(0);
-      // solver.set_var3b_fxpt_ratio(0.99);
-      solver.set_var3b_fxpt_ratio(-1.);
+      //solver.set_refining_fxpt_ratio(0.9999);
+      //      solver.set_propa_fxpt_ratio(0.99);
+      solver.set_propa_fxpt_ratio(0);
+      //solver.set_var3b_fxpt_ratio(0.99);
+      //      solver.set_var3b_propa_fxpt_ratio(0.99);
+      //solver.set_var3b_fxpt_ratio(-1.);
 
-      solver.set_max_slices(20000);
+      solver.set_max_slices(40000);
       solver.set_var3b_timept(1);
-      solver.set_refining_mode(2);
+      solver.set_refining_mode(0);
       solver.set_contraction_mode(2);
       solver.set_trace(1);
 

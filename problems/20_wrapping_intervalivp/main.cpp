@@ -39,9 +39,7 @@ void contract(TubeVector& x)
      delete ctc_dyncid;
 
 
-
-   }
-   
+   }   
 
 }
 
@@ -59,11 +57,11 @@ int main()
     double volume=0.0;
     double totaltime=0.0;
 
-    double step=3.;  // 5.0 explosion 
+    double step=4.;  
     int nbsteps=1;
     for (int i=0; i< nbsteps; i++){
 
-      Vector epsilon(2, 0.5);
+      Vector epsilon(2, 1.);
 
       double t0=i*step;
       if (t0>5) break;
@@ -73,7 +71,7 @@ int main()
       //      cout << " domain " << domain << endl;
       TubeVector x(domain, step, 2);
       x.set(v,t0 ); // initial condition
-
+      
       /* =========== SOLVER =========== */
 
       tubex::Solver solver(epsilon);
@@ -82,14 +80,14 @@ int main()
       solver.set_refining_fxpt_ratio(2.0);
 
       //      solver.set_propa_fxpt_ratio(0.9999);
-      solver.set_propa_fxpt_ratio(0.);
-      solver.set_var3b_propa_fxpt_ratio(0.999);
+      solver.set_propa_fxpt_ratio(0.99);
+      //      solver.set_var3b_propa_fxpt_ratio(0.999);
 
-      //      solver.set_var3b_fxpt_ratio(-1);
-      solver.set_var3b_fxpt_ratio(0.9);
-      solver.set_var3b_timept(1);
-      solver.set_max_slices(1000);
-      solver.set_refining_mode(2);
+      solver.set_var3b_fxpt_ratio(-1);
+      //solver.set_var3b_fxpt_ratio(0.9);
+      //      solver.set_var3b_timept(1);
+      solver.set_max_slices(2000);
+      solver.set_refining_mode(0);
       solver.set_trace(1);
       solver.set_bisection_timept(-1);
       solver.set_contraction_mode(2);

@@ -48,7 +48,7 @@ int main()
     Tube::enable_syntheses(false);
   
     Interval domain(0.,5.0);
-    TubeVector x(domain, 0.2, 1);
+    TubeVector x(domain, 5.0, 1);
     IntervalVector v(1);
     vector<IntervalVector*> gates; 
     v[0]=Interval(0.1,0.4);
@@ -63,11 +63,12 @@ int main()
     //    solver.set_refining_fxpt_ratio(0.99999);
     solver.set_refining_fxpt_ratio(2.0);
       //    solver.set_refining_fxpt_ratio(0.98);
-      //    solver.set_propa_fxpt_ratio(1.);
-    solver.set_var3b_propa_fxpt_ratio(0.999);
-    solver.set_var3b_fxpt_ratio(0.9);
+    //solver.set_propa_fxpt_ratio(0.99);
+    solver.set_propa_fxpt_ratio(0.);
+    //    solver.set_var3b_propa_fxpt_ratio(0.99);
+    solver.set_var3b_fxpt_ratio(0.99);
     solver.set_propa_fxpt_ratio(0);
-    //    solver.set_var3b_fxpt_ratio(-1.);
+    //solver.set_var3b_fxpt_ratio(-1.);
 
     solver.set_max_slices(40000);
 
