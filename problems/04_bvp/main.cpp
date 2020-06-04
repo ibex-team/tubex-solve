@@ -38,14 +38,14 @@ void contract(TubeVector& x)
     x.set(IntervalVector(bounds[0]), 0.);
     x.set(IntervalVector(bounds[1]), 1. );
   
-
+}
   // Differential equation
 
-    tubex::Function f("x", "x");
+    //    tubex::Function f("x", "x");
 
     //    cout << " x before Picard " << x << x.volume() << endl;
     //    cout << " first slice " << *(x[0].first_slice()) << endl;
-    CtcPicard ctc_picard;
+    //    CtcPicard ctc_picard;
     
     /*    ctc_picard.preserve_slicing(true);
     if (x.volume() > 1.e100)
@@ -75,7 +75,7 @@ void contract(TubeVector& x)
     delete ctc_dyncid;
     */
      
-}
+
 
 int main()
 {
@@ -95,14 +95,12 @@ int main()
   /* =========== SOLVER =========== */
 
     tubex::Solver solver(epsilon);
-    //    solver.set_refining_fxpt_ratio(0.9995);
-    //    solver.set_refining_fxpt_ratio(0.9999);
     solver.set_refining_fxpt_ratio(2.0);
     //    solver.set_refining_fxpt_ratio(0.9999);
     //    solver.set_propa_fxpt_ratio(0.99);
     solver.set_propa_fxpt_ratio(0.);
-    solver.set_var3b_propa_fxpt_ratio(0.99);
-    solver.set_var3b_fxpt_ratio(0.99);
+    solver.set_var3b_propa_fxpt_ratio(0.999);
+    solver.set_var3b_fxpt_ratio(0.999);
     //solver.set_var3b_fxpt_ratio(-1.);
 
     solver.set_trace(1);

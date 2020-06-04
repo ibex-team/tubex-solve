@@ -57,11 +57,11 @@ int main()
     double volume=0.0;
     double totaltime=0.0;
 
-    double step=4.;  
+    double step=10.;  
     int nbsteps=1;
     for (int i=0; i< nbsteps; i++){
 
-      Vector epsilon(2, 1.);
+      Vector epsilon(2, 0.4);
 
       double t0=i*step;
       if (t0>5) break;
@@ -79,18 +79,18 @@ int main()
       //    solver.set_refining_fxpt_ratio(0.99999);
       solver.set_refining_fxpt_ratio(2.0);
 
-      //      solver.set_propa_fxpt_ratio(0.9999);
-      solver.set_propa_fxpt_ratio(0.99);
-      //      solver.set_var3b_propa_fxpt_ratio(0.999);
+      solver.set_propa_fxpt_ratio(0.999);
+      //solver.set_propa_fxpt_ratio(0.);
+      solver.set_var3b_propa_fxpt_ratio(0.9999);
 
-      solver.set_var3b_fxpt_ratio(-1);
-      //solver.set_var3b_fxpt_ratio(0.9);
-      //      solver.set_var3b_timept(1);
-      solver.set_max_slices(2000);
+      //      solver.set_var3b_fxpt_ratio(-1);
+      solver.set_var3b_fxpt_ratio(0.9999);
+      solver.set_var3b_timept(0);
+      solver.set_max_slices(10000);
       solver.set_refining_mode(0);
       solver.set_trace(1);
-      solver.set_bisection_timept(-1);
-      solver.set_contraction_mode(2);
+      solver.set_bisection_timept(1);
+      solver.set_contraction_mode(4);
       list<TubeVector> l_solutions = solver.solve(x, f);
     //    cout << "time " << (i+1)*step << " nb sol " << l_solutions.size() << endl;
       if (l_solutions.size()==1) {// cout << " volume " << l_solutions.front().volume() << endl;
@@ -100,7 +100,7 @@ int main()
 	v[1]=l_solutions.front()[1].last_slice()->output_gate();
 	IntervalVector* v1 = new IntervalVector(v);
 	gates.push_back(v1);}
-      else break;
+      else return -1;
     }
     /*
     for (int k=0; k< gates.size(); k++)

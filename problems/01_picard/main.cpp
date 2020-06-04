@@ -54,8 +54,10 @@ void contract(TubeVector& x)
 int main()
 {
   /* =========== PARAMETERS =========== */
-  tubex::Function f("x", "-x");
+  cout << " avant appel tubex function " << endl;
 
+  tubex::Function f("x", "-x");
+cout << " apres appel tubex function " << endl;
     Tube::enable_syntheses(false);
     Vector epsilon(1, 0.005);
     double tf=10.;
@@ -81,16 +83,17 @@ int main()
       TubeVector x(domain,  1);
       //      TubeVector x(domain, 10., 1);
       x.set(v,t1 ); // final condition at t1
-
+      cout << " avant solver " << endl;
       tubex::Solver solver(epsilon);
+      cout << " apres solver " << endl;
       //      solver.set_refining_fxpt_ratio(0.9999);
       solver.set_refining_fxpt_ratio(2.0);
       //      solver.set_propa_fxpt_ratio(0.9999);
       //solver.set_propa_fxpt_ratio(0.99);
-      solver.set_propa_fxpt_ratio(0.99);
+      solver.set_propa_fxpt_ratio(0.);
 
-      // solver.set_var3b_fxpt_ratio(-1);
-      solver.set_var3b_fxpt_ratio(0.99);
+       solver.set_var3b_fxpt_ratio(-1);
+      //      solver.set_var3b_fxpt_ratio(0.99);
       solver.set_var3b_propa_fxpt_ratio(0.99);
       //
       solver.set_var3b_timept(0);
@@ -98,11 +101,11 @@ int main()
       solver.set_max_slices(40000);
       solver.set_refining_mode(0);
       solver.set_bisection_timept(-2);
-      solver.set_contraction_mode(4);
+      solver.set_contraction_mode(0);
       //    solver.figure()->add_trajectoryvector(&truth, "truth");
-
+      cout << " avant solver " << endl;
       list<TubeVector> l_solutions = solver.solve(x, f);
-      
+      cout << " apres solve " << endl;
       //      cout << "time " << (i+1)*step <<  "nb sol " << l_solutions.size() << endl;
       if (l_solutions.size()==1) { cout << " volume " << l_solutions.front().volume() << endl;
 	volume+=l_solutions.front().volume();

@@ -1,0 +1,33 @@
+
+
+
+
+      solver.set_refining_fxpt_ratio(2.0);
+
+      solver.set_propa_fxpt_ratio(0.999);
+      solver.set_var3b_propa_fxpt_ratio(0.99999);
+      solver.set_var3b_fxpt_ratio(0.99999);
+      solver.set_var3b_timept(0);
+      solver.set_max_slices(20000);
+      solver.set_refining_mode(0);
+      solver.set_trace(1);
+      solver.set_bisection_timept(1);
+      solver.set_contraction_mode(2);
+
+
+  1: TubeVector (dim 2) [0, 5]↦([-1.236710405405983, 1.300000011018024] ; [-1.257334680863301, 1.215358422109953]), 20000 slices, ti↦([0.6999999999999999, 1.300000000000001] ; <0, 0>), tf↦([-0.08127328253815952, 0.5982706906197672] ; [-1.159058272092013, -0.6652659224637765]) (max diam: (0.679889 ; 0.666376)) volume : 4.51221
+Total time with clustering: 5571.57s
+bisections 6
+ last gate ([-0.08127328253815952, 0.5982706906197672] ; [-1.159058272092013, -0.6652659224637765])
+ total volume 4.51221 total time 5571.57
+
+
+
+
+________________________________________________________
+
+  1: TubeVector (dim 2) [0, 5]↦([-1.256118602641021, 1.300003324635942] ; [-1.244683219840143, 1.24328624883303]), 2000 slices, ti↦([0.6999999999999999, 1.300000000000001] ; <0, 0>), tf↦([-0.03769124962351562, 0.5690675056362126] ; [-1.173260192870568, -0.7331258204158943]) (max diam: (0.610448 ; 0.593542)) volume : 4.47609
+Total time with clustering: 600.33s
+bisections 13
+ last gate ([-0.03769124962351562, 0.5690675056362126] ; [-1.173260192870568, -0.7331258204158943])
+ total volume 4.47609 total time 600.325

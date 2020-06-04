@@ -53,7 +53,7 @@ int main()
     vector<IntervalVector*> gates; 
     v[0]=Interval(0.1,0.4);
     
-    Vector epsilon(1,0.2);
+    Vector epsilon(1,0.1);
 
 
     
@@ -63,21 +63,21 @@ int main()
     //    solver.set_refining_fxpt_ratio(0.99999);
     solver.set_refining_fxpt_ratio(2.0);
       //    solver.set_refining_fxpt_ratio(0.98);
-    //solver.set_propa_fxpt_ratio(0.99);
-    solver.set_propa_fxpt_ratio(0.);
+    solver.set_propa_fxpt_ratio(0.999);
+    //    solver.set_propa_fxpt_ratio(0.);
     //    solver.set_var3b_propa_fxpt_ratio(0.99);
     solver.set_var3b_fxpt_ratio(0.99);
-    solver.set_propa_fxpt_ratio(0);
-    //solver.set_var3b_fxpt_ratio(-1.);
+    //    solver.set_propa_fxpt_ratio(0);
+    solver.set_var3b_fxpt_ratio(-1.);
 
     solver.set_max_slices(40000);
 
     solver.set_var3b_timept(1);
-    solver.set_bisection_timept(-2);
+    solver.set_bisection_timept(-1);
 
     solver.set_trace(1);
     solver.set_refining_mode(0);
-    solver.set_contraction_mode(2);
+    solver.set_contraction_mode(4);
 
     list<TubeVector> l_solutions = solver.solve(x,f);
     cout <<  "nb sol " << l_solutions.size() << endl;

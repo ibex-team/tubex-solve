@@ -62,7 +62,7 @@ namespace tubex
 
       /* the solve method, it as for parameters a tube vector x0 , and 3 possibilities
          -  a tube vector contractor ctc_func (for general problems as Integrodifferential problems)
-         - a differential function (tubex::Function computing the derivative of a tube vector) (for pure ODEs)
+         - a differential function (tubex::Fnc computing the derivative of a tube vector) (for pure ODEs)
          - a differential function and a tube vector contractor (for ODE problems with side constraints)
 
          The returned results are tubes containing the solutions. Two tubes have at least a disjoint gate.
@@ -70,24 +70,25 @@ namespace tubex
 
 
       const std::list<TubeVector> solve(const TubeVector& x0, void (*ctc_func)(TubeVector&));
-      const std::list<TubeVector> solve(const TubeVector& x0, tubex::Function & f,void (*ctc_func)(TubeVector&)=NULL );
-      const std::list<TubeVector> solve(const TubeVector& x0, tubex::Function* f,void (*ctc_func)(TubeVector&));
+      const std::list<TubeVector> solve(const TubeVector& x0, tubex::Fnc & f,void (*ctc_func)(TubeVector&)=NULL );
+      const std::list<TubeVector> solve(const TubeVector& x0, tubex::Fnc* f,void (*ctc_func)(TubeVector&));
 
       VIBesFigTubeVector* figure();
       static const ibex::BoolInterval solutions_contain(const std::list<TubeVector>& l_solutions, const TrajectoryVector& truth);
       //      void (*ctc_func) (TubeVector&);
 
   protected:
+      double one_finite_gate(TubeVector &x);
       bool empty_intersection(TubeVector& t1, TubeVector& t2);
       void clustering(std::list<std::pair<int,TubeVector> >& l_tubes);
       void clustering(std::list<TubeVector>& l_tubes);
       bool stopping_condition_met(const TubeVector& x);
       bool fixed_point_reached(double volume_before, double volume_after, float fxpt_ratio);
-      void propagation(TubeVector &x, tubex::Function* f, void (*ctc_func)(TubeVector&), float propa_fxpt_ratio, bool incremental, double t0);
-      void deriv_contraction (TubeVector &x, tubex::Function& f);
-      void integration_contraction(TubeVector &x, tubex::Function& f, double t0, bool incremental);
-      void picard_contraction (TubeVector &x, tubex::Function& f);
-      void var3b(TubeVector &x,tubex::Function* f, void (*ctc_func)(TubeVector&));
+      void propagation(TubeVector &x, tubex::Fnc* f, void (*ctc_func)(TubeVector&), float propa_fxpt_ratio, bool incremental, double t0);
+      void deriv_contraction (TubeVector &x, tubex::Fnc& f);
+      void integration_contraction(TubeVector &x, tubex::Fnc& f, double t0, bool incremental);
+      void picard_contraction (TubeVector &x, tubex::Fnc& f);
+      void var3b(TubeVector &x,tubex::Fnc* f, void (*ctc_func)(TubeVector&));
       bool refining (TubeVector &x);
       double average_refining_threshold(const TubeVector &x, 
 				vector<double>& slice_step, vector<double>& t_refining);
@@ -96,9 +97,9 @@ namespace tubex
       bool refining_with_threshold(TubeVector & v, int nb_slices);
 
 
-      void bisection_guess (TubeVector & x, tubex::Function& f);
-      std::pair<int,std::pair<double,double>> bisection_guess(TubeVector x, TubeVector v, Ctc* slice_ctr, tubex::Function& fnc, int variant);
-      std::pair<int,std::pair<double,double>> bisection_guess(TubeVector x, TubeVector v, Ctc* slice_ctr, tubex::Function& fnc);
+      void bisection_guess (TubeVector & x, tubex::Fnc& f);
+      std::pair<int,std::pair<double,double>> bisection_guess(TubeVector x, TubeVector v, Ctc* slice_ctr, tubex::Fnc& fnc, int variant);
+      std::pair<int,std::pair<double,double>> bisection_guess(TubeVector x, TubeVector v, Ctc* slice_ctr, tubex::Fnc& fnc);
 
       ibex::Vector m_max_thickness = ibex::Vector(1);
       float m_refining_fxpt_ratio = 0.005;
@@ -118,7 +119,7 @@ namespace tubex
       int m_contraction_mode=0; 
       // Embedded graphics
       VIBesFigTubeVector *m_fig = NULL;
-
+      int bisections=0;
   };
 }
 
