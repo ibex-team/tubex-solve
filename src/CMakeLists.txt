@@ -4,6 +4,7 @@
 
 # source files of libtubex-solve
 list (APPEND SRC ${CMAKE_CURRENT_SOURCE_DIR}/tubex_Solver.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/tubex_Solver_bisectionguess.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/tubex_Solver.h
                  )
 
