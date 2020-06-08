@@ -1,11 +1,11 @@
 /* ============================================================================
- *  tubex-lib - Solver class
+ *  tubex-lib - Bisection guess (part of Solver)
  * ============================================================================
  *  Copyright : Copyright 2017 Simon Rohou
  *  License   : This program is distributed under the terms of
  *              the GNU Lesser General Public License (LGPL).
  *
- *  Author(s) : Simon Rohou, Bertrand Neveu
+ *  Author(s) : Victor Reyes , Bertrand Neveu
  *  Bug fixes : -
  *  Created   : 2018
  * ---------------------------------------------------------------------------- */
@@ -23,7 +23,7 @@ using namespace ibex;
 
 namespace tubex
 {
-  void Solver::bisection_guess (TubeVector & x, tubex::Fnc& f){
+  void Solver::bisection_guess (TubeVector & x, TFnc& f){
     TubeVector v = f.eval_vector(x);
     CtcDynCid ctc(f);
     std::pair< int,std::pair<double,double> > guess = bisection_guess (x,v,&ctc,f,2);
@@ -41,7 +41,7 @@ namespace tubex
 
   
 
-  std::pair<int,std::pair<double,double>> Solver::bisection_guess(TubeVector x, TubeVector v, Ctc* slice_ctr, tubex::Fnc& fnc, int variant){
+  std::pair<int,std::pair<double,double>> Solver::bisection_guess(TubeVector x, TubeVector v, DynCtc* slice_ctr, TFnc& fnc, int variant){
     //variant 0 -> return immediately as soon as we find a potential gate
 		//variant 1 -> return the largest gate in a slice
 		//variant 2 -> return the largest gate in the complete tube
@@ -57,7 +57,7 @@ namespace tubex
 
 		/*check if everything is ok*/
 		assert(x.size() == v.size());
-		assert(x.domain() == v.domain());
+		assert(x.tdomain() == v.tdomain());
 		assert(TubeVector::same_slicing(x, v));
 
 		/*init all the tubes*/
@@ -77,9 +77,9 @@ namespace tubex
 			aux_x_slice.clear(); aux_v_slice.clear();
 
 			//for forward
-			TPropagation t_propa;
+			TimePropag t_propa;
 			if (it == 0){
-				t_propa = FORWARD;
+			  t_propa = TimePropag::FORWARD;
 				for (int i = 0 ; i < x.size() ; i++){
 					x_slice.push_back(x[i].first_slice());
 					v_slice.push_back(v[i].first_slice());
@@ -89,7 +89,7 @@ namespace tubex
 			}
 			//for backward
 			else{
-				t_propa = BACKWARD;
+			  t_propa = TimePropag::BACKWARD;
 				for (int i = 0 ; i < x.size() ; i++){
 					x_slice.push_back(x[i].last_slice());
 					v_slice.push_back(v[i].last_slice());
@@ -100,15 +100,15 @@ namespace tubex
 
 			while (x_slice[0] != NULL){
 				for (int i = 0 ; i < x.size() ; i++){
-					if (t_propa & FORWARD){
+				  if (t_propa & TimePropag::FORWARD){
 						x_bisection = aux_x_slice[i]->output_gate().mid();
-						t_bisection = aux_x_slice[i]->domain().ub();
+						t_bisection = aux_x_slice[i]->tdomain().ub();
 						gate_diam = aux_x_slice[i]->output_gate().diam();
 						aux_x_slice[i]->set_output_gate(x_bisection);
 					}
-					else if (t_propa & BACKWARD){
+				  else if (t_propa & TimePropag::BACKWARD){
 						x_bisection = aux_x_slice[i]->input_gate().mid();
-						t_bisection = aux_x_slice[i]->domain().lb();
+						t_bisection = aux_x_slice[i]->tdomain().lb();
 						gate_diam = aux_x_slice[i]->input_gate().diam();
 						aux_x_slice[i]->set_input_gate(x_bisection);
 					}
@@ -158,7 +158,7 @@ namespace tubex
 						return bisection;
 				}
 
-				if (t_propa & FORWARD){
+				if (t_propa & TimePropag::FORWARD){
 					for (int i = 0 ; i < x.size() ; i++){
 						x_slice[i] = x_slice[i]->next_slice();
 						v_slice[i] = v_slice[i]->next_slice();
@@ -166,7 +166,7 @@ namespace tubex
 						aux_v_slice[i] = aux_v_slice[i]->next_slice();
 					}
 				}
-				else if (t_propa & BACKWARD){
+				else if (t_propa & TimePropag::BACKWARD){
 					for (int i = 0 ; i < x.size() ; i++){
 						x_slice[i] = x_slice[i]->prev_slice();
 						v_slice[i] = v_slice[i]->prev_slice();
@@ -184,7 +184,7 @@ namespace tubex
 
 
 
-  std::pair<int,std::pair<double,double>> Solver::bisection_guess(TubeVector x, TubeVector v, Ctc* slice_ctr, tubex::Fnc& fnc){
+  std::pair<int,std::pair<double,double>> Solver::bisection_guess(TubeVector x, TubeVector v, DynCtc* slice_ctr, TFnc& fnc){
 
 		/*variable - time of bisection - bisection point*/
 		pair <int, pair <double,double> > bisection;
@@ -197,7 +197,7 @@ namespace tubex
 
 		/*check if everything is ok*/
 		assert(x.size() == v.size());
-		assert(x.domain() == v.domain());
+		assert(x.tdomain() == v.tdomain());
 		assert(TubeVector::same_slicing(x, v));
 
 
@@ -217,9 +217,9 @@ namespace tubex
 			aux_x_slice.clear(); aux_v_slice.clear();
 
 			//for forward
-			TPropagation t_propa;
+			TimePropag t_propa;
 			if (it == 0){
-				t_propa = FORWARD;
+			  t_propa = TimePropag::FORWARD;
 				for (int i = 0 ; i < x.size() ; i++){
 					x_slice.push_back(x[i].first_slice());
 					v_slice.push_back(v[i].first_slice());
@@ -229,7 +229,7 @@ namespace tubex
 			}
 			//for backward
 			else{
-				t_propa = BACKWARD;
+			  t_propa = TimePropag::BACKWARD;
 				for (int i = 0 ; i < x.size() ; i++){
 					x_slice.push_back(x[i].last_slice());
 					v_slice.push_back(v[i].last_slice());
@@ -240,14 +240,14 @@ namespace tubex
 
 			while (x_slice[0] != NULL){
 				for (int i = 0 ; i < x.size() ; i++){
-					if (t_propa & FORWARD){
+				  if (t_propa & TimePropag::FORWARD){
 						x_bisection = aux_x_slice[i]->output_gate().mid();
-						t_bisection = aux_x_slice[i]->domain().ub();
+						t_bisection = aux_x_slice[i]->tdomain().ub();
 						aux_x_slice[i]->set_output_gate(x_bisection);
 					}
-					else if (t_propa & BACKWARD){
+				  else if (t_propa & TimePropag::BACKWARD){
 						x_bisection = aux_x_slice[i]->input_gate().mid();
-						t_bisection = aux_x_slice[i]->domain().lb();
+						t_bisection = aux_x_slice[i]->tdomain().lb();
 						aux_x_slice[i]->set_input_gate(x_bisection);
 					}
 					if(dynamic_cast <CtcDynCid*> (slice_ctr)){
@@ -283,7 +283,7 @@ namespace tubex
 
 				}
 
-				if (t_propa & FORWARD){
+				if (t_propa & TimePropag::FORWARD){
 					for (int i = 0 ; i < x.size() ; i++){
 						x_slice[i] = x_slice[i]->next_slice();
 						v_slice[i] = v_slice[i]->next_slice();
@@ -291,7 +291,7 @@ namespace tubex
 						aux_v_slice[i] = aux_v_slice[i]->next_slice();
 					}
 				}
-				else if (t_propa & BACKWARD){
+				else if (t_propa & TimePropag::BACKWARD){
 					for (int i = 0 ; i < x.size() ; i++){
 						x_slice[i] = x_slice[i]->prev_slice();
 						v_slice[i] = v_slice[i]->prev_slice();

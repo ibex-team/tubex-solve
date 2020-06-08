@@ -107,7 +107,7 @@ namespace tubex
       if (x[i].first_slice()->input_gate().diam() >= DBL_MAX)
 	{finite=false;break;}
     if (finite==true)
-      return x[0].first_slice()->domain().lb();
+      return x[0].first_slice()->tdomain().lb();
     else{
       finite=true; 
       for (int i=0; i< x.size() ; i++)
@@ -115,13 +115,13 @@ namespace tubex
 	{finite=false;break;}
     }
     if (finite==true)
-      return x[0].last_slice()->domain().ub();
+      return x[0].last_slice()->tdomain().ub();
     else{
-      double t0= x[0].domain().lb()-1;
+      double t0= x[0].tdomain().lb()-1;
       for (int i=0 ;i< x.size(); i++){
 	for ( Slice*s= x[i].first_slice(); s!=NULL; s=s->next_slice())
 	  if (s->input_gate().diam()<DBL_MAX && s->input_gate().diam()>0  )
-	    {return s->domain().lb();}
+	    {return s->tdomain().lb();}
       }
     }
     throw tubex::Exception (" solver " , "solver unable to bisect ");
@@ -142,7 +142,7 @@ namespace tubex
       {  // one slice is refined
       
       // double t_refining = x[0].wider_slice()->domain().mid() // the widest slice            
-      double t_refining= x.steepest_slice()->domain().mid();    
+      double t_refining= x.steepest_slice()->tdomain().mid();    
       x.sample(t_refining);
       // cout << "refining point " << t_refining << endl;
       return true;
@@ -157,7 +157,7 @@ namespace tubex
 	    int k=0;
 	    for ( Slice*s= x[i].first_slice(); s!=NULL; s=s->next_slice()){
 	      if (k+nb_slices >= m_max_slices) break;
-	      x[i].sample(s->domain().mid(),s);
+	      x[i].sample(s->tdomain().mid(),s);
 	      s=s->next_slice();
 	      k++;
 	    }
@@ -167,7 +167,7 @@ namespace tubex
 	int k=0;
 	for (const Slice*s= x[0].first_slice(); s!=NULL; s=s->next_slice()){
 	  if (k+nb_slices >= m_max_slices) break;
-	  x.sample(s->domain().mid());
+	  x.sample(s->tdomain().mid());
 	  s=s->next_slice();
 	  k++;
 	}
@@ -197,7 +197,7 @@ namespace tubex
 	    for ( Slice*s= x[i].first_slice(); s!=NULL; s=s->next_slice()){
 	      if (new_slices +nb_slices >= m_max_slices) break;
 	      if (slice_step[k] >= step_threshold){
-		x[i].sample(s->domain().mid(),s);
+		x[i].sample(s->tdomain().mid(),s);
 		s=s->next_slice();
 		new_slices++;
 	      }
@@ -231,7 +231,7 @@ namespace tubex
 
 	for (const Slice*slice=s[0]; slice!=NULL; slice=slice->next_slice()){
 
-	  t_refining.push_back(slice->domain().mid());
+	  t_refining.push_back(slice->tdomain().mid());
 	  double step_max= fabs(slice->output_gate().mid() - slice->input_gate().mid());
 
 	  for (int k=1; k< x.size(); k++){
@@ -265,7 +265,7 @@ namespace tubex
 	  s[k]=x[k].first_slice();
 
 	for (const Slice*slice=s[0]; slice!=NULL; slice=slice->next_slice()){
-	  t_refining.push_back(slice->domain().mid());
+	  t_refining.push_back(slice->tdomain().mid());
 	  double step_max= fabs(slice->output_gate().mid() - slice->input_gate().mid());
 
 	  for (int k=1; k< x.size(); k++){
@@ -288,12 +288,12 @@ namespace tubex
 
 
 
-  const list<TubeVector> Solver::solve(const TubeVector& x0,  tubex::Fnc& f, void (*ctc_func)(TubeVector&)) { return (solve(x0,&f,ctc_func));}
+  const list<TubeVector> Solver::solve(const TubeVector& x0,  TFnc& f, void (*ctc_func)(TubeVector&)) { return (solve(x0,&f,ctc_func));}
 
   const list<TubeVector> Solver::solve(const TubeVector& x0, void (*ctc_func)(TubeVector&)) {return (solve(x0,NULL, ctc_func));}
 
 
-  const list<TubeVector> Solver::solve(const TubeVector& x0, tubex::Fnc* f, void (*ctc_func)(TubeVector&))
+  const list<TubeVector> Solver::solve(const TubeVector& x0, TFnc* f, void (*ctc_func)(TubeVector&))
   {
     bisections=0;
     solving_time=0.0;
@@ -305,7 +305,7 @@ namespace tubex
     #if GRAPHICS
     m_fig->show(true);
     #endif
-    double t_init=x0[0].domain().lb();
+    double t_init=x0[0].tdomain().lb();
     int prev_level = 0;
     list<pair<pair<int,double>,TubeVector> > s;
     s.push_back(make_pair(make_pair(0,t_init), x0));
@@ -370,7 +370,7 @@ namespace tubex
 	if (m_trace) cout << " nb_slices after refining step " << x[0].nb_slices() << endl;
 	// 2. Propagations up to the fixed point
 
-	propagation(x, f, ctc_func, m_propa_fxpt_ratio, false, x[0].domain().lb());
+	propagation(x, f, ctc_func, m_propa_fxpt_ratio, false, x[0].tdomain().lb());
 	// 3.      
 	emptiness = x.is_empty();
 	double volume_before_var3b;
@@ -393,11 +393,11 @@ namespace tubex
       
       while(!emptiness
 	    && !(stopping_condition_met(x))
-	    && ( x.volume() >= DBL_MAX  || !fixed_point_reached(volume_before_refining, x.volume(), m_refining_fxpt_ratio)));
-
+	    && ( x.volume() >= DBL_MAX  || !fixed_point_reached(volume_before_refining, x.volume(), m_refining_fxpt_ratio ) || level > 0));
       // 4. Bisection
       emptiness=x.is_empty();
       if(!emptiness)
+
         {
           if(stopping_condition_met(x) || m_bisection_timept==-2 )
           {
@@ -423,20 +423,20 @@ namespace tubex
 	      if (m_bisection_timept==0)
 		x.max_gate_diam(t_bisection);
 	      else if (m_bisection_timept==1)
-		t_bisection=x[0].domain().ub();
+		t_bisection=x[0].tdomain().ub();
 	      else if  (m_bisection_timept==-1)
-		t_bisection=x[0].domain().lb();
+		t_bisection=x[0].tdomain().lb();
 	      else if  (m_bisection_timept==2){
 		if (rand()%2)
-		  t_bisection=x[0].domain().lb();
+		  t_bisection=x[0].tdomain().lb();
 		else
-		  t_bisection=x[0].domain().ub();
+		  t_bisection=x[0].tdomain().ub();
 	      }
 	      else if  (m_bisection_timept==3){
 	      if (level%2)
-		t_bisection=x[0].domain().lb();
+		t_bisection=x[0].tdomain().lb();
 	      else
-		t_bisection=x[0].domain().ub();
+		t_bisection=x[0].tdomain().ub();
 	      }
 
 	   
@@ -463,7 +463,7 @@ namespace tubex
 	      {	 
 		cout << " exception " << endl;
 		x.max_gate_diam(t_bisection);
-		//                t_bisection=x.largest_slice()->domain().mid();
+		//                t_bisection=x.largest_slice()->tdomain().mid();
 	        pair<TubeVector,TubeVector> p_x = x.bisect(t_bisection);
 
              if (m_trace)	      cout << " t_bisection " << t_bisection << " x volume " << x.volume() << " nb_slices " << x.nb_slices()  << endl;
@@ -502,7 +502,7 @@ namespace tubex
       
       if (m_trace) 
 	cout << "  " << j << ": "
-           << *it <<  ", ti↦" << (*it)(it->domain().lb()) <<  ", tf↦" << (*it)(it->domain().ub())
+           << *it <<  ", ti↦" << (*it)(it->tdomain().lb()) <<  ", tf↦" << (*it)(it->tdomain().ub())
 	     << " (max diam: " << it->max_diam() << ")"
 	   << " volume : " << it->volume() 
            << endl;
@@ -520,7 +520,7 @@ namespace tubex
 	  j++;
 	  if (m_trace)
 	    cout << "  " << j << ": "
-	       << *it << ", ti↦" << (*it)(it->domain().lb())  <<  ", tf↦" << (*it)(it->domain().ub())
+	       << *it << ", ti↦" << (*it)(it->tdomain().lb())  <<  ", tf↦" << (*it)(it->tdomain().ub())
 	       << " (max diam: " << it->max_diam() << ")"
 	       << " volume : " << it->volume() 
 	       << endl;
@@ -600,7 +600,7 @@ namespace tubex
       }
       if(!clustering){
 	if (m_trace) {cout << "new cluster tube " << nn+1 << endl;
-	  cout << ", ti↦" << (*it1)(it1->domain().lb()) << endl;}
+	  cout << ", ti↦" << (*it1)(it1->tdomain().lb()) << endl;}
 	l_clustered.push_back(*it1);
       }
       nn++;
@@ -625,7 +625,7 @@ namespace tubex
 	     
 	   for (const Slice* s= tubevector1[k].first_slice(); s!=NULL; s=s->next_slice()){
 
-	     while (s2->domain().ub() <= s->domain().lb()){
+	     while (s2->tdomain().ub() <= s->tdomain().lb()){
           
 	       s2=s2->next_slice();}
              
@@ -634,7 +634,7 @@ namespace tubex
 				 cout << *s << endl;
 		                 cout << *s2 << endl; 
 		 return true;}
-	     if (s->domain().ub() <= s2->domain().lb())
+	     if (s->tdomain().ub() <= s2->tdomain().lb())
 	      if ((s->output_gate() & s2->codomain()).is_empty())
 		{cout << " middle s "<< endl;  return true;}
 	   
@@ -687,27 +687,27 @@ namespace tubex
     return (std::pow(volume_after, 1./n) / std::pow(volume_before, 1./n)) >= fxpt_ratio;
   }
 
-  void Solver::picard_contraction (TubeVector &x, tubex::Fnc& f){
+  void Solver::picard_contraction (TubeVector &x, TFnc& f){
     if (x.volume()>= DBL_MAX){
       //      cout << " volume before picard " << x.volume() << endl;
       CtcPicard ctc_picard;
       ctc_picard.preserve_slicing(true);
-      ctc_picard.contract(f, x, FORWARD | BACKWARD);
+      ctc_picard.contract(f, x, TimePropag::FORWARD | TimePropag::BACKWARD);
       //   cout << " volume after picard " << x.volume() << endl;
     }
   }
 
-  void Solver::deriv_contraction (TubeVector &x, tubex::Fnc& f){
+  void Solver::deriv_contraction (TubeVector &x, TFnc& f){
     CtcDeriv ctc;
     //	    cout << " volume before ctc deriv " << volume_before_ctc << endl;
     ctc.set_fast_mode(true);
-    ctc.contract(x, f.eval_vector(x),FORWARD | BACKWARD);
+    ctc.contract(x, f.eval_vector(x), TimePropag::FORWARD | TimePropag::BACKWARD);
     //	   cout << "volume after ctc deriv " << x.volume() << endl;
   }
 
-  void Solver::integration_contraction(TubeVector &x, tubex::Fnc& f, double t0, bool incremental){
+  void Solver::integration_contraction(TubeVector &x, TFnc& f, double t0, bool incremental){
     
-    Ctc* ctc_dyncid;
+    DynCtc* ctc_dyncid;
     CtcIntegration* ctc_integration;
     if (m_contraction_mode==0)
       ctc_dyncid =  new CtcDynBasic(f);
@@ -736,32 +736,32 @@ namespace tubex
 	  ctc_integration->set_incremental_mode(false);
 	*/
 	//	cout << " before " << x.volume() << " t0 " << t0 << endl;
-	//	ctc_integration->contract(x,v,x[0].domain().lb(),FORWARD);
+	//	ctc_integration->contract(x,v,x[0].tdomain().lb(),FORWARD);
 	//	v = f.eval_vector(x);
-	ctc_integration->contract(x,v,t0,FORWARD) ;
+	ctc_integration->contract(x,v,t0,TimePropag::FORWARD) ;
 	//	v = f.eval_vector(x);
 	//	cout << " after t0 forward " <<  x.volume() << endl;
-	ctc_integration->contract(x,v,x[0].domain().ub(),BACKWARD);
+	ctc_integration->contract(x,v,x[0].tdomain().ub(),TimePropag::BACKWARD);
 	//	v = f.eval_vector(x);
 	//	cout << " after tf backward  " << x.volume()<<  endl;
-	ctc_integration->contract(x,v,t0,BACKWARD) ;
+	ctc_integration->contract(x,v,t0,TimePropag::BACKWARD) ;
 	//	v = f.eval_vector(x);
-	ctc_integration->contract(x,v,x[0].domain().lb(),FORWARD);
+	ctc_integration->contract(x,v,x[0].tdomain().lb(),TimePropag::FORWARD);
 	//	ctc_integration->contract(x,v,t0,FORWARD) ;
 	//	cout << " after t0 backward " << x.volume()<< endl;
 
 	//	cout << " end propagation " <<  x.volume() << endl;
 	//	ctc_integration->contract(x,v,t0,FORWARD) ;
-	//	ctc_integration->contract(x,v,x[0].domain().ub(),BACKWARD);
+	//	ctc_integration->contract(x,v,x[0].tdomain().ub(),BACKWARD);
 	//	ctc_integration->contract(x,v,t0,BACKWARD);
       }
     else
       {
       ctc_integration->set_incremental_mode(false);
       //      cout << " x before " << x << endl;
-      ctc_integration->contract(x,v,x[0].domain().lb(),FORWARD);
+      ctc_integration->contract(x,v,x[0].tdomain().lb(),TimePropag::FORWARD);
       //      cout << " x after forward " << x << endl;
-      ctc_integration->contract(x,v,x[0].domain().ub(),BACKWARD);
+      ctc_integration->contract(x,v,x[0].tdomain().ub(),TimePropag::BACKWARD);
       //      cout << " x after backward " << x << endl;
       }
     delete ctc_dyncid; delete ctc_integration;
@@ -769,7 +769,7 @@ namespace tubex
 
 
 
-  void Solver::propagation(TubeVector &x, tubex::Fnc* f, void (*ctc_func)(TubeVector&), float propa_fxpt_ratio, bool incremental, double t0 )
+  void Solver::propagation(TubeVector &x, TFnc* f, void (*ctc_func)(TubeVector&), float propa_fxpt_ratio, bool incremental, double t0 )
   {
     if  (propa_fxpt_ratio <0.0) return;
     double volume_before_ctc;
@@ -808,7 +808,7 @@ namespace tubex
 
 
 
-  void Solver::var3b(TubeVector &x, tubex::Fnc * f,void (*ctc_func)(TubeVector&) )
+  void Solver::var3b(TubeVector &x, TFnc * f,void (*ctc_func)(TubeVector&) )
   {
     //    cout << " volume before var3b " << x.volume() << endl;
     if(m_var3b_fxpt_ratio < 0. || x.volume() >= DBL_MAX)
@@ -821,14 +821,14 @@ namespace tubex
     //    cout << " var3b " << x << endl;
     double t_bisection;
     if (m_var3b_timept==1)
-      t_bisection=x[0].domain().ub();
+      t_bisection=x[0].tdomain().ub();
     else if (m_var3b_timept==-1)
-      t_bisection=x[0].domain().lb();
+      t_bisection=x[0].tdomain().lb();
     else  if (m_var3b_timept==2){
       if (rand()%2)
-	t_bisection=x[0].domain().lb();
+	t_bisection=x[0].tdomain().lb();
       else
-	t_bisection=x[0].domain().ub();
+	t_bisection=x[0].tdomain().ub();
     }
     else
       x.max_gate_diam(t_bisection);  

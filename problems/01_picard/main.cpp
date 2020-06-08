@@ -19,13 +19,13 @@ using namespace tubex;
 
 void contract(TubeVector& x)
 {
-  tubex::Function f("x", "-x");
+  TFunction f("x", "-x");
 
   CtcPicard ctc_picard;
   
   ctc_picard.preserve_slicing(false);
    if (x.volume()> 500.0) 
-     ctc_picard.contract(f, x, BACKWARD);
+     ctc_picard.contract(f, x, TimePropag::BACKWARD);
   
    //  cout << " after picard " << x << endl;
    //   cout << " volume " << x.volume()  << endl;
@@ -34,7 +34,7 @@ void contract(TubeVector& x)
   CtcDeriv ctc_deriv;
   ctc_deriv.set_fast_mode(true);
   ctc_deriv.preserve_slicing(false);
-  ctc_deriv.contract(x, f.eval_vector(x),FORWARD | BACKWARD);
+  ctc_deriv.contract(x, f.eval_vector(x),TimePropag::FORWARD | TimePropag::BACKWARD);
 
   /*
    TubeVector v = f.eval_vector(x);
@@ -42,9 +42,9 @@ void contract(TubeVector& x)
    ctc_dyncid->set_fast_mode(true);
    CtcIntegration ctc_integration(f,ctc_dyncid);
   
-   ctc_integration.contract(x,v,x[0].domain().lb(),FORWARD) ;
+   ctc_integration.contract(x,v,x[0].domain().lb(),TimePropag::FORWARD) ;
   
-   ctc_integration.contract(x,v,x[0].domain().ub(),BACKWARD) ;
+   ctc_integration.contract(x,v,x[0].domain().ub(),TimePropag::BACKWARD) ;
   
    delete ctc_dyncid;
    */
@@ -56,7 +56,7 @@ int main()
   /* =========== PARAMETERS =========== */
   cout << " avant appel tubex function " << endl;
 
-  tubex::Function f("x", "-x");
+  TFunction f("x", "-x");
 cout << " apres appel tubex function " << endl;
     Tube::enable_syntheses(false);
     Vector epsilon(1, 0.005);
@@ -64,7 +64,7 @@ cout << " apres appel tubex function " << endl;
     IntervalVector v(1);
     vector<IntervalVector*> gates; 
     Interval domain0(0.,tf);
-    TrajectoryVector truth(domain0, tubex::Function("exp(-t)"));
+    TrajectoryVector truth(domain0, TFunction("exp(-t)"));
     //    x.set(IntervalVector(truth(Interval(tf))), tf); // final condition
     v[0]=Interval(exp(Interval(-tf)));  
     /* =========== SOLVER =========== */
@@ -92,7 +92,7 @@ cout << " apres appel tubex function " << endl;
       //solver.set_propa_fxpt_ratio(0.99);
       solver.set_propa_fxpt_ratio(0.);
 
-       solver.set_var3b_fxpt_ratio(-1);
+      solver.set_var3b_fxpt_ratio(-1);
       //      solver.set_var3b_fxpt_ratio(0.99);
       solver.set_var3b_propa_fxpt_ratio(0.99);
       //

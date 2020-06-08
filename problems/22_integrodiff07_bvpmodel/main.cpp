@@ -78,13 +78,13 @@ int main()
     IntervalVector x0(2);
     IntervalVector x1(2);
     
-    x0[0]=Interval(-10,10);
+    // x0[0]=Interval(-100,100);
     x0[1]=Interval(0,0);
 
     x.set(x0,0.);
-    x1[0]=Interval(-10,10);
-    x1[1]=Interval(-10.,10.);
-    x.set(x1,1.0);
+    //    x1[0]=Interval(-100,100);
+    // x1[1]=Interval(-10,10);
+    //    x.set(x1,1.0);
     
 
     TrajectoryVector truth1(domain, tubex::Function("(exp(-t)*(-(cos(2*t)*(-1 + cos(4) + 2*sin(4) + 4*exp(1)*sqrt(2*(1 + cos(4) + 2*exp(2) - sin(4))))) + sin(2*t)*(2 + 2*cos(4) - sin(4) + 2*exp(1)*(2*exp(1) + sqrt(2*(1 + cos(4) + 2*exp(2) - sin(4)))))))/(5 + 3*cos(4) + 8*exp(2) - 4*sin(4))"));
@@ -94,15 +94,15 @@ int main()
 
     tubex::Solver solver(epsilon);
     //    solver.set_refining_fxpt_ratio(0.99999);
-    solver.set_refining_fxpt_ratio(2.0);
-    //    solver.set_refining_fxpt_ratio(0.9);
+    solver.set_refining_fxpt_ratio(0.9);
     solver.set_propa_fxpt_ratio(0.);
+    //solver.set_propa_fxpt_ratio(0.999);
     //    solver.set_var3b_fxpt_ratio(0.99);
-    solver.set_var3b_fxpt_ratio(0.999);
+    //    solver.set_var3b_fxpt_ratio(0.999);
     solver.set_var3b_fxpt_ratio(-1);
     solver.set_var3b_propa_fxpt_ratio(0.999);
     solver.set_trace(1);
-    solver.set_max_slices(100000);
+    solver.set_max_slices(400);
     solver.set_refining_mode(0);
     solver.set_var3b_timept(0);
     solver.set_bisection_timept(3);
