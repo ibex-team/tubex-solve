@@ -9,13 +9,13 @@ using namespace tubex;
 
 void contract(TubeVector& x)
 {
-  tubex::Function f("x1", "x2" ,"(-x2;x1)");
+TFunction f("x1", "x2" ,"(-x2;x1)");
   
 
   CtcPicard ctc_picard;
   ctc_picard.preserve_slicing(false);
   if (x.volume() > 5000)
-    ctc_picard.contract(f, x, FORWARD);
+    ctc_picard.contract(f, x, TimePropag::FORWARD);
   /*
   CtcDeriv ctc_deriv;
   ctc_deriv.set_fast_mode(true);
@@ -28,9 +28,9 @@ void contract(TubeVector& x)
   ctc_dyncid->set_fast_mode(true);
   CtcIntegration ctc_integration(f,ctc_dyncid);
 
-  ctc_integration.contract(x,v,x[0].domain().lb(),FORWARD) ;
+  ctc_integration.contract(x,v,x[0].tdomain().lb(),TimePropag::FORWARD) ;
 
-  ctc_integration.contract(x,v,x[0].domain().ub(),BACKWARD) ;
+  ctc_integration.contract(x,v,x[0].tdomain().ub(),TimePropag::BACKWARD) ;
 
   delete ctc_dyncid;
   
@@ -38,7 +38,7 @@ void contract(TubeVector& x)
 
 int main()
 {
-  tubex::Function f("x1", "x2" ,"(-x2;x1)");
+TFunction f("x1", "x2" ,"(-x2;x1)");
   /* =========== PARAMETERS =========== */
   double pi=M_PI;
     Tube::enable_syntheses(false);
@@ -82,7 +82,7 @@ int main()
       solver.set_max_slices(40000);
       solver.set_var3b_timept(1);
       solver.set_refining_mode(0);
-      solver.set_contraction_mode(2);
+      solver.set_contraction_mode(1);
       solver.set_trace(1);
 
 

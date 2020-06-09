@@ -19,13 +19,13 @@ using namespace std;
 using namespace ibex;
 using namespace tubex;
 
-class FncIntegroDiff : public tubex::Fnc {
+class FncIntegroDiff : public TFnc {
   public: 
 
-    FncIntegroDiff() : Fnc(1, 1, true) {};
+    FncIntegroDiff() : TFnc(1, 1, true) {};
   const TubeVector eval_vector(const TubeVector& x) const { 
     // cout << "eval vector " << endl;
-    return Fnc::eval_vector(x); }
+    return TFnc::eval_vector(x); }
   const Interval eval(const IntervalVector& x) const { /* scalar case not defined */ }
   const Interval eval(int slice_id, const TubeVector& x) const { /* scalar case not defined */ }
   const Interval eval(const Interval& t, const TubeVector& x) const { /* scalar case not defined */ }
@@ -46,7 +46,7 @@ class FncIntegroDiff : public tubex::Fnc {
       //      cout <<  " tube " << x[0] << endl;
       //     cout << " slice_id " << slice_id << endl;
       //     cout << " slice " <<  *(x[0].slice(slice_id)) << endl;
-      Interval t = x[0].slice(slice_id)->domain();
+      Interval t = x[0].slice(slice_id)->tdomain();
       //      cout << " t " << t << endl;
       return eval_vector(t, x);
     }
@@ -87,29 +87,29 @@ void contract(TubeVector& x)
     
 
   // Differential equation
-    /*
+    
     FncIntegroDiff f;
-
+    
     CtcPicard ctc_picard(1.1);
     ctc_picard.preserve_slicing(true);
     if (x.volume() > 50000.)
-      ctc_picard.contract(f, x, FORWARD | BACKWARD);
+      ctc_picard.contract(f, x, TimePropag::FORWARD | TimePropag::BACKWARD);
     //    cout << x[0] << " nb slices " << x[0].nb_slices();
-
-TubeVector v = f.eval_vector(x);
+    
+    TubeVector v = f.eval_vector(x);
 //  CtcDynCid* ctc_dyncid = new CtcDynCid(f);     
-//   CtcDynCidGuess* ctc_dyncid = new CtcDynCidGuess(f);     
- CtcDynBasic* ctc_dyncid = new CtcDynBasic(f);     
-   ctc_dyncid->set_fast_mode(true);
-   CtcIntegration ctc_integration(f,ctc_dyncid);
+    CtcDynCidGuess* ctc_dyncid = new CtcDynCidGuess(f);     
+    // CtcDynBasic* ctc_dyncid = new CtcDynBasic(f);     
+    ctc_dyncid->set_fast_mode(true);
+    CtcIntegration ctc_integration(f,ctc_dyncid);
+    
+    ctc_integration.contract(x,v,x[0].tdomain().lb(), TimePropag::FORWARD, integrodiff) ;
   
-   ctc_integration.contract(x,v,x[0].domain().lb(),FORWARD, integrodiff) ;
+    ctc_integration.contract(x,v,x[0].tdomain().ub(), TimePropag::BACKWARD,integrodiff ) ;
   
-   ctc_integration.contract(x,v,x[0].domain().ub(),BACKWARD,integrodiff ) ;
-  
-   delete ctc_dyncid;
+    delete ctc_dyncid;
 
-  
+    /*
     
     CtcDeriv ctc_deriv;
     ctc_deriv.preserve_slicing(true);
@@ -135,8 +135,8 @@ int main()
     Vector epsilon(n, 0.02);
     Interval domain(0.,1.);
     TubeVector x(domain, n);
-    TrajectoryVector truth1(domain, tubex::Function("(exp(-t)*(-(cos(2*t)*(-1 + cos(4) + 2*sin(4) + 4*exp(1)*sqrt(2*(1 + cos(4) + 2*exp(2) - sin(4))))) + sin(2*t)*(2 + 2*cos(4) - sin(4) + 2*exp(1)*(2*exp(1) + sqrt(2*(1 + cos(4) + 2*exp(2) - sin(4)))))))/(5 + 3*cos(4) + 8*exp(2) - 4*sin(4))"));
-    TrajectoryVector truth2(domain, tubex::Function("(exp(-t)*(-(cos(2*t)*(-1 + cos(4) + 2*sin(4) - 4*exp(1)*sqrt(2*(1 + cos(4) + 2*exp(2) - sin(4))))) + sin(2*t)*(2 + 2*cos(4) + 4*exp(2) - sin(4) - 2*exp(1)*sqrt(2*(1 + cos(4) + 2*exp(2) - sin(4))))))/(5 + 3*cos(4) + 8*exp(2) - 4*sin(4))"));
+    TrajectoryVector truth1(domain, TFunction("(exp(-t)*(-(cos(2*t)*(-1 + cos(4) + 2*sin(4) + 4*exp(1)*sqrt(2*(1 + cos(4) + 2*exp(2) - sin(4))))) + sin(2*t)*(2 + 2*cos(4) - sin(4) + 2*exp(1)*(2*exp(1) + sqrt(2*(1 + cos(4) + 2*exp(2) - sin(4)))))))/(5 + 3*cos(4) + 8*exp(2) - 4*sin(4))"));
+    TrajectoryVector truth2(domain, TFunction("(exp(-t)*(-(cos(2*t)*(-1 + cos(4) + 2*sin(4) - 4*exp(1)*sqrt(2*(1 + cos(4) + 2*exp(2) - sin(4))))) + sin(2*t)*(2 + 2*cos(4) + 4*exp(2) - sin(4) - 2*exp(1)*sqrt(2*(1 + cos(4) + 2*exp(2) - sin(4))))))/(5 + 3*cos(4) + 8*exp(2) - 4*sin(4))"));
 
   /* =========== SOLVER =========== */
 
@@ -155,11 +155,11 @@ int main()
     solver.set_refining_mode(0);
     solver.set_var3b_timept(0);
     solver.set_bisection_timept(0);
-    solver.set_contraction_mode(4);
+    solver.set_contraction_mode(2);
     //    solver.figure()->add_trajectoryvector(&truth1, "truth1");
     //    solver.figure()->add_trajectoryvector(&truth2, "truth2");
-    list<TubeVector> l_solutions = solver.solve(x, f, &contract);
-    //    list<TubeVector> l_solutions = solver.solve(x, &contract);
+    //    list<TubeVector> l_solutions = solver.solve(x, f, &contract);
+    list<TubeVector> l_solutions = solver.solve(x, &contract);
 
   // Checking if this example still works:
   return solver.solutions_contain(l_solutions, truth1) == YES

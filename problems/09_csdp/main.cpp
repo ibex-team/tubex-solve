@@ -20,13 +20,13 @@ using namespace tubex;
 
 void contract(TubeVector& x)
 {
-  tubex::Function f("y1", "y2", "(-0.7*y1 ; 0.7*y1 - (ln(2)/5.)*y2)");
+  TFunction f("y1", "y2", "(-0.7*y1 ; 0.7*y1 - (ln(2)/5.)*y2)");
 
   
   CtcPicard ctc_picard;
   ctc_picard.preserve_slicing(false);
   if (x.volume() > 50000.)
-    ctc_picard.contract(f, x, FORWARD | BACKWARD);
+    ctc_picard.contract(f, x, TimePropag::FORWARD | TimePropag::BACKWARD);
   TubeVector v = f.eval_vector(x);
   /*
   CtcDeriv ctc_deriv;
@@ -39,9 +39,9 @@ void contract(TubeVector& x)
   ctc_dyncid->set_fast_mode(true);
   CtcIntegration ctc_integration(f,ctc_dyncid);
 
-  ctc_integration.contract(x,v,x[0].domain().lb(),FORWARD) ;
+  ctc_integration.contract(x,v,x[0].tdomain().lb(),TimePropag::FORWARD) ;
 
-  ctc_integration.contract(x,v,x[0].domain().ub(),BACKWARD) ;
+  ctc_integration.contract(x,v,x[0].tdomain().ub(),TimePropag::BACKWARD) ;
 
   delete ctc_dyncid;
   
@@ -57,7 +57,7 @@ void contract(TubeVector& x)
 int main()
 {
   /* =========== PARAMETERS =========== */
-  tubex::Function f("y1", "y2", "(-0.7*y1 ; 0.7*y1 - (ln(2)/5.)*y2)");
+  TFunction f("y1", "y2", "(-0.7*y1 ; 0.7*y1 - (ln(2)/5.)*y2)");
     Tube::enable_syntheses(false);
     int n = 2;
     Interval domain(0.,6.);
@@ -71,9 +71,9 @@ int main()
     Vector epsilon(n); epsilon[0] = 0.04 ; epsilon[1] = 0.04;
 
     // Boundary condition:
-    IntervalVector init = x(x.domain().lb());
+    IntervalVector init = x(x.tdomain().lb());
     init[0] = 1.25;
-    x.set(init, x.domain().lb());
+    x.set(init, x.tdomain().lb());
 
     // Additional restriction (maximum value):
     Interval domain_restriction(1.,3.);
@@ -97,7 +97,7 @@ int main()
     solver.set_var3b_timept(0);
  
     solver.set_trace(1);
-    solver.set_max_slices(1000000);
+    solver.set_max_slices(40000);
     solver.set_refining_mode(0);
     solver.set_contraction_mode(2);
     solver.set_bisection_timept(-2);

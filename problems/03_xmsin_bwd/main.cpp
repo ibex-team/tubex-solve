@@ -20,7 +20,7 @@ using namespace tubex;
 
 void contract(TubeVector& x)
 {
-  tubex::Function f("x", "-sin(x)");
+  TFunction f("x", "-sin(x)");
   /*
   CtcPicard ctc_picard;
   
@@ -48,9 +48,9 @@ void contract(TubeVector& x)
 
   //  ctc_integration.set_picard_mode(true);
   
-  ctc_integration.contract(x,v,x[0].domain().lb(),FORWARD) ;
+  ctc_integration.contract(x,v,x[0].tdomain().lb(),TimePropag::FORWARD) ;
   //  cout << " x after call to fwd contract " << x << endl;
-  ctc_integration.contract(x,v,x[0].domain().ub(),BACKWARD) ;
+  ctc_integration.contract(x,v,x[0].tdomain().ub(),TimePropag::BACKWARD) ;
 
   //  cout << " x after end backward " << x << endl;
   delete ctc_dyncid;
@@ -60,14 +60,14 @@ void contract(TubeVector& x)
 int main()
 {
   /* =========== PARAMETERS =========== */
-  tubex::Function f("x", "-sin(x)");
+  TFunction f("x", "-sin(x)");
   Tube::enable_syntheses(false);
   Vector epsilon(1,0.005);
   double tf=10.;
 
   vector<IntervalVector*> gates; 
   Interval domain0(0.,tf);
-    TrajectoryVector truth(domain0, tubex::Function("2.*atan(exp(-t)*tan(0.5))"));
+    TrajectoryVector truth(domain0, TFunction("2.*atan(exp(-t)*tan(0.5))"));
      //    x.set(IntervalVector(truth(Interval(tf))), tf); // final condition
 
     //    v[0]=Interval(exp(Interval(-tf)));  /* =========== SOLVER =========== */
@@ -94,7 +94,7 @@ int main()
       solver.set_propa_fxpt_ratio(0);
       solver.set_var3b_propa_fxpt_ratio(0.99);
       //solver.set_var3b_fxpt_ratio(0.99);
-      solver.set_var3b_fxpt_ratio(-1.);
+      solver.set_var3b_fxpt_ratio(-1);
       solver.set_bisection_timept(-2);
       solver.set_var3b_timept(0);
       solver.set_refining_mode(0);

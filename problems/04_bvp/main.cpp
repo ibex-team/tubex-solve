@@ -41,7 +41,7 @@ void contract(TubeVector& x)
 }
   // Differential equation
 
-    //    tubex::Function f("x", "x");
+    //    TFunction f("x", "x");
 
     //    cout << " x before Picard " << x << x.volume() << endl;
     //    cout << " first slice " << *(x[0].first_slice()) << endl;
@@ -79,7 +79,7 @@ void contract(TubeVector& x)
 
 int main()
 {
-    tubex::Function f("x", "x");
+    TFunction f("x", "x");
   /* =========== PARAMETERS =========== */
 
     Tube::enable_syntheses(false);
@@ -89,8 +89,8 @@ int main()
     Interval domain(0.,1.);
     //    TubeVector x(domain, n, Interval (-1.e100,1.e100));
     TubeVector x(domain, n);
-    TrajectoryVector truth1(domain, tubex::Function("exp(t)/sqrt(1+exp(2))"));
-    TrajectoryVector truth2(domain, tubex::Function("-exp(t)/sqrt(1+exp(2))"));
+    TrajectoryVector truth1(domain, TFunction("exp(t)/sqrt(1+exp(2))"));
+    TrajectoryVector truth2(domain, TFunction("-exp(t)/sqrt(1+exp(2))"));
 
   /* =========== SOLVER =========== */
 
@@ -100,15 +100,15 @@ int main()
     //    solver.set_propa_fxpt_ratio(0.99);
     solver.set_propa_fxpt_ratio(0.);
     solver.set_var3b_propa_fxpt_ratio(0.999);
-    solver.set_var3b_fxpt_ratio(0.999);
-    //solver.set_var3b_fxpt_ratio(-1.);
+    //    solver.set_var3b_fxpt_ratio(0.999);
+    solver.set_var3b_fxpt_ratio(-1.);
 
     solver.set_trace(1);
     solver.set_var3b_timept(2);
     solver.set_bisection_timept(3);
     solver.set_max_slices(10000);
     solver.set_refining_mode(0);
-    solver.set_contraction_mode(2);
+    solver.set_contraction_mode(1);
     //    solver.figure()->add_trajectoryvector(&truth1, "truth1");
     //    solver.figure()->add_trajectoryvector(&truth2, "truth2");
     list<TubeVector> l_solutions = solver.solve(x, f, &contract);

@@ -58,7 +58,8 @@ int main()
 
   TFunction f("x", "-x");
 cout << " apres appel tubex function " << endl;
-    Tube::enable_syntheses(false);
+//y
+ Tube::enable_syntheses(false);
     Vector epsilon(1, 0.005);
     double tf=10.;
     IntervalVector v(1);
@@ -101,7 +102,7 @@ cout << " apres appel tubex function " << endl;
       solver.set_max_slices(40000);
       solver.set_refining_mode(0);
       solver.set_bisection_timept(-2);
-      solver.set_contraction_mode(0);
+      solver.set_contraction_mode(2);
       //    solver.figure()->add_trajectoryvector(&truth, "truth");
       cout << " avant solver " << endl;
       list<TubeVector> l_solutions = solver.solve(x, f);
