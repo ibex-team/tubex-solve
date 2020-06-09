@@ -15,27 +15,27 @@ using namespace tubex;
 
 void contract(TubeVector& x)
 {
-  tubex::Function f("x1", "x2" ,"(-x2+0.1*x1*(1-x1^2-x2^2);x1+0.1*x1*(1-x1^2-x2^2))");
+  TFunction f("x1", "x2" ,"(-x2+0.1*x1*(1-x1^2-x2^2);x1+0.1*x1*(1-x1^2-x2^2))");
 
   CtcPicard ctc_picard;
   ctc_picard.preserve_slicing(false);
   if (x.volume() > 1.e100) 
-    ctc_picard.contract(f, x, FORWARD);
+    ctc_picard.contract(f, x, TimePropag::FORWARD);
 
    if (x.volume() < 1.e100){
      TubeVector v = f.eval_vector(x);
 
      CtcDeriv ctc_deriv;
      ctc_deriv.set_fast_mode(true);
-     ctc_deriv.contract(x, v, FORWARD | BACKWARD);
+     ctc_deriv.contract(x, v, TimePropag::FORWARD | TimePropag::BACKWARD);
      v=f.eval_vector(x);
 
   
      CtcDynCid* ctc_dyncid = new CtcDynCid(f);     
      ctc_dyncid->set_fast_mode(true);
      CtcIntegration ctc_integration(f,ctc_dyncid);
-     ctc_integration.contract(x,v,x[0].domain().lb(),FORWARD) ;
-     ctc_integration.contract(x,v,x[0].domain().ub(),BACKWARD) ;
+     ctc_integration.contract(x,v,x[0].tdomain().lb(),TimePropag::FORWARD) ;
+     ctc_integration.contract(x,v,x[0].tdomain().ub(),TimePropag::BACKWARD) ;
      delete ctc_dyncid;
 
 
@@ -45,7 +45,7 @@ void contract(TubeVector& x)
 
 int main()
 {
-  tubex::Function f("x1", "x2" ,"(-x2+0.1*x1*(1-x1^2-x2^2);x1+0.1*x1*(1-x1^2-x2^2))");
+  TFunction f("x1", "x2" ,"(-x2+0.1*x1*(1-x1^2-x2^2);x1+0.1*x1*(1-x1^2-x2^2))");
   /* =========== PARAMETERS =========== */
     Tube::enable_syntheses(false);
     IntervalVector v(2);

@@ -8,21 +8,21 @@ using namespace tubex;
 
 void contract(TubeVector& x)
 {
-   tubex::Function f("x1", "x2" ,"(10*(x1-sin(x2))+cos(x2);1)");
+   TFunction f("x1", "x2" ,"(10*(x1-sin(x2))+cos(x2);1)");
 
   CtcPicard ctc_picard;
   ctc_picard.preserve_slicing(false);
   if (x.volume() > 50000.)
-    ctc_picard.contract(f, x, FORWARD);
+    ctc_picard.contract(f, x, TimePropag::FORWARD);
 
   CtcDeriv ctc_deriv;
   ctc_deriv.set_fast_mode(true);
-  ctc_deriv.contract(x, f.eval_vector(x), FORWARD | BACKWARD);
+  ctc_deriv.contract(x, f.eval_vector(x), TimePropag::FORWARD | TimePropag::BACKWARD);
 }
 
 int main()
 {
-  tubex::Function f("x1", "x2" ,"(10*(x1-sin(x2))+cos(x2);1)");
+  TFunction f("x1", "x2" ,"(10*(x1-sin(x2))+cos(x2);1)");
   /* =========== PARAMETERS =========== */
     Tube::enable_syntheses(false);
     IntervalVector v(2);

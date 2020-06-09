@@ -23,7 +23,7 @@ void contract(TubeVector& x)
   
   // Differential equation
 
-  tubex::Function f("x1", "x2", "(x2;-x1)");
+  TFunction f("x1", "x2", "(x2;-x1)");
 
 
     CtcPicard ctc_picard;
@@ -44,8 +44,8 @@ void contract(TubeVector& x)
     CtcDynCidGuess* ctc_dyncid = new CtcDynCidGuess(f);     
     ctc_dyncid->set_fast_mode(true);
     CtcIntegration ctc_integration(f,ctc_dyncid);
-    ctc_integration.contract(x,v,x[0].domain().lb(),FORWARD) ;
-    ctc_integration.contract(x,v,x[0].domain().ub(),BACKWARD) ;
+    ctc_integration.contract(x,v,x[0].tdomain().lb(),TimePropag::FORWARD) ;
+    ctc_integration.contract(x,v,x[0].tdomain().ub(),TimePropag::BACKWARD) ;
     delete ctc_dyncid;
  
     }
@@ -53,7 +53,7 @@ void contract(TubeVector& x)
 
 int main()
 {
-  tubex::Function f("x1", "x2", "(x2;-x1)");
+  TFunction f("x1", "x2", "(x2;-x1)");
   /* =========== PARAMETERS =========== */
   double pi=M_PI;
     Tube::enable_syntheses(false);

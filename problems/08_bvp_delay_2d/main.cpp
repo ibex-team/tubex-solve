@@ -17,11 +17,11 @@ using namespace std;
 using namespace ibex;
 using namespace tubex;
 
-class FncDelayCustom : public tubex::Fnc
+class FncDelayCustom : public TFnc
 {
   public: 
 
-    FncDelayCustom() : Fnc(2, 2, true) { };
+    FncDelayCustom() : TFnc(2, 2, true) { };
     const Interval eval(const IntervalVector& x) const { /* scalar case not defined */ }
     const Interval eval(int slice_id, const TubeVector& x) const { /* scalar case not defined */ }
     const Interval eval(const Interval& t, const TubeVector& x) const { /* scalar case not defined */ }
@@ -30,7 +30,7 @@ class FncDelayCustom : public tubex::Fnc
 
     const IntervalVector eval_vector(int slice_id, const TubeVector& x) const
     {
-      Interval t = x[0].slice(slice_id)->domain();
+      Interval t = x[0].slice(slice_id)->tdomain();
       return eval_vector(t, x);
     }
 
@@ -61,11 +61,11 @@ void contract(TubeVector& x)
 
   CtcPicard ctc_picard(1.1);
   ctc_picard.preserve_slicing(true);
-  ctc_picard.contract(f, x, FORWARD | BACKWARD);
+  ctc_picard.contract(f, x, TimePropag::FORWARD | TimePropag::BACKWARD);
 
   CtcDeriv ctc_deriv;
   ctc_deriv.preserve_slicing(true);
-  ctc_deriv.contract(x, f.eval_vector(x), FORWARD | BACKWARD);
+  ctc_deriv.contract(x, f.eval_vector(x), TimePropag::FORWARD | TimePropag::BACKWARD);
 }
 
 int main()
@@ -84,10 +84,10 @@ int main()
     IntervalVector init(2);
     init[0] = Interval(1.25, 1.3);
     init[1] = Interval(0.25, 0.3);
-    x.set(init, x.domain().lb());
+    x.set(init, x.tdomain().lb());
     init[0] = Interval(1.25, 1.3);
     init[1] = Interval(0.25, 0.3);
-    x.set(init, x.domain().ub());
+    x.set(init, x.tdomain().ub());
 
   /* =========== SOLVER =========== */
 

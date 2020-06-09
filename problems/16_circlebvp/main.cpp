@@ -11,19 +11,19 @@ using namespace tubex;
 
 void contract(TubeVector& x)
 {
-  tubex::Function f("x1", "x2" ,"(-x2;x1)");
+  TFunction f("x1", "x2" ,"(-x2;x1)");
 
   
   CtcPicard ctc_picard;
   ctc_picard.preserve_slicing(false);
   if (x.volume() > 1.e100)
-    ctc_picard.contract(f, x, FORWARD | BACKWARD);
+    ctc_picard.contract(f, x, TimePropag::FORWARD | TimePropag::BACKWARD);
   TubeVector v = f.eval_vector(x);
   
   CtcDeriv ctc_deriv;
  
   ctc_deriv.set_fast_mode(true);
-  ctc_deriv.contract(x, v, FORWARD | BACKWARD);
+  ctc_deriv.contract(x, v, TimePropag::FORWARD | TimePropag::BACKWARD);
   v = f.eval_vector(x);
   
   //  CtcDynCidGuess* ctc_dyncid = new CtcDynCidGuess(f1);     
@@ -43,7 +43,7 @@ void contract(TubeVector& x)
 
 int main()
 {
-  tubex::Function f("x1", "x2" ,"(-x2;x1)");
+  TFunction f("x1", "x2" ,"(-x2;x1)");
   /* =========== PARAMETERS =========== */
   double pi=M_PI;
     Tube::enable_syntheses(false);

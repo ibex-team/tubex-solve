@@ -17,11 +17,11 @@ using namespace std;
 using namespace ibex;
 using namespace tubex;
 
-class FncDelayCustom : public tubex::Fnc
+class FncDelayCustom : public TFnc
 {
   public: 
 
-    FncDelayCustom(double delay) : Fnc(1, 1, true), m_delay(delay) { }
+    FncDelayCustom(double delay) : TFnc(1, 1, true), m_delay(delay) { }
     const Interval eval(int slice_id, const TubeVector& x) const { cout << "not defined 1" << endl; }
     const Interval eval(const Interval& t, const TubeVector& x) const { cout << "not defined 2" << endl; }
     const Interval eval(const IntervalVector& x) const { cout << "not defined 3" << endl; }
@@ -29,7 +29,7 @@ class FncDelayCustom : public tubex::Fnc
 
     const IntervalVector eval_vector(int slice_id, const TubeVector& x) const
     {
-      Interval t = x[0].slice(slice_id)->domain();
+      Interval t = x[0].slice(slice_id)->tdomain();
       return eval_vector(t, x);
     }
 
@@ -37,11 +37,11 @@ class FncDelayCustom : public tubex::Fnc
     {
       IntervalVector eval_result(x.size(), Interval::EMPTY_SET);
 
-      if((t - m_delay).lb() <= x.domain().lb())
+      if((t - m_delay).lb() <= x.tdomain().lb())
         eval_result |= x(t);
 
-      if((t - m_delay).ub() >= x.domain().lb())
-        eval_result |= exp(m_delay) * x((t - m_delay) & x.domain());
+      if((t - m_delay).ub() >= x.tdomain().lb())
+        eval_result |= exp(m_delay) * x((t - m_delay) & x.tdomain());
 
       return eval_result;
     }
@@ -59,18 +59,19 @@ void contract(TubeVector& x)
   CtcPicard ctc_picard;
   ctc_picard.preserve_slicing(false);
   if (x.volume() > 50000.)
-    ctc_picard.contract(f, x, FORWARD | BACKWARD);
+    ctc_picard.contract(f, x, TimePropag::FORWARD | TimePropag::BACKWARD);
 
   // Computing the derivative v from a delay of x
   CtcDelay ctc_delay;
   TubeVector v(x, IntervalVector(x.size()));
-  ctc_delay.contract(delay, x, v);
+  Interval idelay(delay);
+  ctc_delay.contract(idelay, x, v);
   v *= exp(delay);
 
   CtcDeriv ctc_deriv;
   ctc_deriv.set_fast_mode(true);
   ctc_deriv.preserve_slicing(false);
-  ctc_deriv.contract(x, v, FORWARD | BACKWARD);
+  ctc_deriv.contract(x, v, TimePropag::FORWARD | TimePropag::BACKWARD);
 }
 
 int main()
@@ -82,7 +83,7 @@ int main()
     Vector epsilon(n, 100.);
     Interval domain(0.,5.);
     TubeVector x(domain, n);
-    TrajectoryVector truth(domain, tubex::Function("exp(t)"));
+    TrajectoryVector truth(domain, TFunction("exp(t)"));
     //delete?
     double t_value = domain.lb();
     Interval init_value(exp(t_value));

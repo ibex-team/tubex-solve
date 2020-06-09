@@ -26,18 +26,18 @@ void contract(TubeVector& x)
    2 tubes solutions 
  */
 {
-  tubex::Function f("x1", "x2" ,"(x2;-exp(x1))");
+  TFunction f("x1", "x2" ,"(x2;-exp(x1))");
 
   CtcPicard ctc_picard;
   ctc_picard.preserve_slicing(false);
   if (x.volume() > 50000.)
-    ctc_picard.contract(f, x, FORWARD | BACKWARD);
+    ctc_picard.contract(f, x, TimePropag::FORWARD | TimePropag::BACKWARD);
 
   TubeVector v = f.eval_vector(x);
   
   CtcDeriv ctc_deriv;
   ctc_deriv.set_fast_mode(true);
-  ctc_deriv.contract(x, v, FORWARD | BACKWARD);
+  ctc_deriv.contract(x, v, TimePropag::FORWARD | TimePropag::BACKWARD);
 
   /*
   v=f.eval_vector(x);
@@ -57,7 +57,7 @@ void contract(TubeVector& x)
 int main()
 {
   /* =========== PARAMETERS =========== */
-  tubex::Function f("x1", "x2" ,"(x2;-exp(x1))");
+  TFunction f("x1", "x2" ,"(x2;-exp(x1))");
     Tube::enable_syntheses(false);
 
     Interval domain(0.,1.);

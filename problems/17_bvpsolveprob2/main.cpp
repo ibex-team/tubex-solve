@@ -21,20 +21,20 @@ using namespace tubex;
 
 void contract(TubeVector& x)
 {
-  tubex::Function f("x1", "x2" ,"(x2;x2/0.2)");
+  TFunction f("x1", "x2" ,"(x2;x2/0.2)");
 
 
   CtcPicard ctc_picard;
   ctc_picard.preserve_slicing(false);
   if (x.volume() > 1.e300)
-    ctc_picard.contract(f, x, FORWARD | BACKWARD);
+    ctc_picard.contract(f, x, TimePropag::FORWARD | TimePropag::BACKWARD);
    
   TubeVector v = f.eval_vector(x);
 
   CtcDeriv ctc_deriv;
   ctc_deriv.set_fast_mode(true);
 
-  ctc_deriv.contract(x, v, FORWARD | BACKWARD);
+  ctc_deriv.contract(x, v, TimePropag::FORWARD | TimePropag::BACKWARD);
 
  
   
@@ -51,8 +51,8 @@ void contract(TubeVector& x)
   // cout << x << " volume before " << x.volume() << endl;;
  
   
-  ctc_integration.contract(x,v,x[0].domain().lb(),FORWARD) ;
-  ctc_integration.contract(x,v,x[0].domain().ub(),BACKWARD) ;
+  ctc_integration.contract(x,v,x[0].tdomain().lb(),TimePropag::FORWARD) ;
+  ctc_integration.contract(x,v,x[0].tdomain().ub(),TimePropag::BACKWARD) ;
   //cout << x << " volume after " << x.volume() << endl;;
   
   delete ctc_dyncid;
@@ -64,7 +64,7 @@ void contract(TubeVector& x)
 
 int main()
 {
-  tubex::Function f("x1", "x2" ,"(x2;x2/0.2)");
+  TFunction f("x1", "x2" ,"(x2;x2/0.2)");
   /* =========== PARAMETERS =========== */
 
     Tube::enable_syntheses(false);
