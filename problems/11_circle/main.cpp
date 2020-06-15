@@ -82,7 +82,7 @@ TFunction f("x1", "x2" ,"(-x2;x1)");
       solver.set_max_slices(40000);
       solver.set_var3b_timept(1);
       solver.set_refining_mode(0);
-      solver.set_contraction_mode(1);
+      solver.set_contraction_mode(2);
       solver.set_trace(1);
 
 

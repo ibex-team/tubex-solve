@@ -108,7 +108,7 @@ int main()
     solver.set_bisection_timept(3);
     solver.set_max_slices(10000);
     solver.set_refining_mode(0);
-    solver.set_contraction_mode(1);
+    solver.set_contraction_mode(2);
     //    solver.figure()->add_trajectoryvector(&truth1, "truth1");
     //    solver.figure()->add_trajectoryvector(&truth2, "truth2");
     list<TubeVector> l_solutions = solver.solve(x, f, &contract);
