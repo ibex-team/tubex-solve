@@ -61,15 +61,16 @@ set(CMAKE_CXX_FLAGS     "${CMAKE_CXX_FLAGS} -DNDEBUG") # comment for debug
 
 set(TUBEX_INCLUDE_DIRS "/certis/3/neveub/RECHERCHE/tubex/tubex2/tubex-lib/make/include"
                        "/certis/3/neveub/RECHERCHE/tubex/tubex2/tubex-lib/make/src/core"
-                       "/certis/3/neveub/RECHERCHE/ibex/ibex-2.8/ibex-lib/include/ibex"
-                       "/certis/3/neveub/RECHERCHE/ibex/ibex-2.8/ibex-lib/include"
-                       "/certis/3/neveub/RECHERCHE/ibex/ibex-2.8/ibex-lib/include/ibex/3rd"
+                       "/certis/3/neveub/RECHERCHE/ibex/ibex2-8/ibex-lib/include/ibex"
+                       "/certis/3/neveub/RECHERCHE/ibex/ibex2-8/ibex-lib/include"
+                       "/certis/3/neveub/RECHERCHE/ibex/ibex2-8/ibex-lib/include/ibex/3rd"
                        "/certis/3/neveub/RECHERCHE/soplex/soplex-3.1.1/src")
 link_directories("/certis/3/neveub/RECHERCHE/tubex/tubex2/tubex-lib/make/src/core"
-                 "/certis/3/neveub/RECHERCHE/ibex/ibex-2.8/ibex-lib/lib"
-                 "/certis/3/neveub/RECHERCHE/ibex/ibex-2.8/ibex-lib/lib/ibex/3rd"
+                 "/certis/3/neveub/RECHERCHE/ibex/ibex2-8/ibex-lib/lib"
+                 "/certis/3/neveub/RECHERCHE/ibex/ibex2-8/ibex-lib/lib/ibex/3rd"
 		 "/certis/3/neveub/RECHERCHE/soplex/soplex-3.1.1/lib")
-set(TUBEX_LDFLAGS "tubex" "ibex" "gaol" "ultim" "gdtoa" "soplex")
+#set(TUBEX_LDFLAGS "tubex" "ibex" "gaol" "ultim" "gdtoa" "soplex")
+set(TUBEX_LDFLAGS "tubex" "ibex" "prim" "soplex")
 
 ################################################################################
 # Compile sources
