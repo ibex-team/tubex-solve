@@ -69,10 +69,10 @@ namespace tubex
       */
 
 
-      const std::list<TubeVector> solve(const TubeVector& x0, void (*ctc_func)(TubeVector&));
-      const std::list<TubeVector> solve(const TubeVector& x0, tubex::Fnc & f,void (*ctc_func)(TubeVector&)=NULL );
-      const std::list<TubeVector> solve(const TubeVector& x0, tubex::Fnc* f,void (*ctc_func)(TubeVector&));
-
+      //    const std::list<TubeVector> solve(const TubeVector& x0, void (*ctc_func)(TubeVector&));
+      const std::list<TubeVector> solve(const TubeVector& x0, tubex::Fnc & f,void (*ctc_func)(TubeVector&, double& t0, bool incremental)=NULL );
+      const std::list<TubeVector> solve(const TubeVector& x0, tubex::Fnc* f,void (*ctc_func)(TubeVector&, double& t0, bool incremental));
+      const std::list<TubeVector> solve(const TubeVector& x0, void (*ctc_func)(TubeVector&, double& t0, bool incremental));
       VIBesFigTubeVector* figure();
       static const ibex::BoolInterval solutions_contain(const std::list<TubeVector>& l_solutions, const TrajectoryVector& truth);
       //      void (*ctc_func) (TubeVector&);
@@ -84,11 +84,11 @@ namespace tubex
       void clustering(std::list<TubeVector>& l_tubes);
       bool stopping_condition_met(const TubeVector& x);
       bool fixed_point_reached(double volume_before, double volume_after, float fxpt_ratio);
-      void propagation(TubeVector &x, tubex::Fnc* f, void (*ctc_func)(TubeVector&), float propa_fxpt_ratio, bool incremental, double t0);
+      void propagation(TubeVector &x, tubex::Fnc* f, void (*ctc_func)(TubeVector&, double& t0, bool incremental), float propa_fxpt_ratio, bool incremental, double t0);
       void deriv_contraction (TubeVector &x, tubex::Fnc& f);
       void integration_contraction(TubeVector &x, tubex::Fnc& f, double t0, bool incremental);
       void picard_contraction (TubeVector &x, tubex::Fnc& f);
-      void var3b(TubeVector &x,tubex::Fnc* f, void (*ctc_func)(TubeVector&));
+      void var3b(TubeVector &x,tubex::Fnc* f, void (*ctc_func)(TubeVector&, double& t0, bool incremental));
       bool refining (TubeVector &x);
       double average_refining_threshold(const TubeVector &x, 
 				vector<double>& slice_step, vector<double>& t_refining);

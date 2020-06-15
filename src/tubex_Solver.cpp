@@ -287,13 +287,14 @@ namespace tubex
   }
 
 
+  
+  const list<TubeVector> Solver::solve(const TubeVector& x0,  tubex::Fnc& f, void (*ctc_func)(TubeVector&, double& t0, bool incremental)) { return (solve(x0,&f,ctc_func));}
+  
 
-  const list<TubeVector> Solver::solve(const TubeVector& x0,  tubex::Fnc& f, void (*ctc_func)(TubeVector&)) { return (solve(x0,&f,ctc_func));}
+  const list<TubeVector> Solver::solve(const TubeVector& x0, void (*ctc_func)(TubeVector&,double& t0, bool incremental)) {return (solve(x0,NULL, ctc_func));}
 
-  const list<TubeVector> Solver::solve(const TubeVector& x0, void (*ctc_func)(TubeVector&)) {return (solve(x0,NULL, ctc_func));}
-
-
-  const list<TubeVector> Solver::solve(const TubeVector& x0, tubex::Fnc* f, void (*ctc_func)(TubeVector&))
+ 
+  const list<TubeVector> Solver::solve(const TubeVector& x0, tubex::Fnc* f, void (*ctc_func)(TubeVector&, double& t0, bool incremental))
   {
     bisections=0;
     solving_time=0.0;
@@ -769,7 +770,7 @@ namespace tubex
 
 
 
-  void Solver::propagation(TubeVector &x, tubex::Fnc* f, void (*ctc_func)(TubeVector&), float propa_fxpt_ratio, bool incremental, double t0 )
+  void Solver::propagation(TubeVector &x, tubex::Fnc* f, void (*ctc_func)(TubeVector&, double& t0, bool incremental), float propa_fxpt_ratio, bool incremental, double t0 )
   {
     if  (propa_fxpt_ratio <0.0) return;
     double volume_before_ctc;
@@ -777,7 +778,7 @@ namespace tubex
     do
       {
 	volume_before_ctc = x.volume();
-        if (ctc_func) {ctc_func(x);  // Other constraints contraction
+        if (ctc_func) {ctc_func(x, t0, incremental);  // Other constraints contraction
 	  incremental=false;}
 	if (f){                     // ODE contraction
 	  
@@ -808,7 +809,7 @@ namespace tubex
 
 
 
-  void Solver::var3b(TubeVector &x, tubex::Fnc * f,void (*ctc_func)(TubeVector&) )
+  void Solver::var3b(TubeVector &x, tubex::Fnc * f,void (*ctc_func) (TubeVector&,double& t0,bool incremental))
   {
     //    cout << " volume before var3b " << x.volume() << endl;
     if(m_var3b_fxpt_ratio < 0. || x.volume() >= DBL_MAX)
