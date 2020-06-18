@@ -420,9 +420,16 @@ namespace tubex
             if (m_trace) cout << "Bisection... (level " << level << ")" << endl;
 	    //	    if (f) bisection_guess (x,*f);  //TODO use bisection_guess
 	    double t_bisection;
-	    if (x.volume() < DBL_MAX){
-	      if (m_bisection_timept==0)
-		x.max_gate_diam(t_bisection);
+	    //	    cout << " domain " << x[0].domain() << " " <<x[0].domain().lb() << endl;
+	    //	    cout << "m_bisection_timept" << m_bisection_timept << endl;
+
+	      if (m_bisection_timept==0){
+		if (x.volume() < DBL_MAX)
+		  x.max_gate_diam(t_bisection);
+		else
+		  t_bisection=one_finite_gate(x);
+	      }
+		  
 	      else if (m_bisection_timept==1)
 		t_bisection=x[0].domain().ub();
 	      else if  (m_bisection_timept==-1)
@@ -441,14 +448,13 @@ namespace tubex
 	      }
 
 	   
-	    else  // infinite tube : 
-	      t_bisection=one_finite_gate(x);
-	    }
+	      
 	    bisections++;
 	    level++;
+	    cout << " t_bisection " << t_bisection << endl;
             try{
 	      pair<TubeVector,TubeVector> p_x = x.bisect(t_bisection);
-	  
+
 	      //   s.push_back(make_pair(level, p_x.second));   // breadth first variant
 	      //   s.push_back (make_pair(level, p_x.first));
 	    
@@ -666,9 +672,9 @@ namespace tubex
     Vector x_max_thickness = x.max_diam();
     for(int i = 0 ; i < x.size() ; i++)
       {
-	//      double tmaxgate;
-	//	if(x[i].max_gate_diam(tmaxgate) > m_max_thickness[i])
-	if(x_max_thickness[i] > m_max_thickness[i])
+	double tmaxgate;
+	if(x[i].max_gate_diam(tmaxgate) > m_max_thickness[i])
+	//	if(x_max_thickness[i] > m_max_thickness[i])
         return false;
       }
     /*
