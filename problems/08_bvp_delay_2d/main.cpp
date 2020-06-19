@@ -55,7 +55,7 @@ class FncDelayCustom : public tubex::Fnc
     }
 };
 
-void contract(TubeVector& x)
+void contract(TubeVector& x, double& t0, bool incremental)
 {
   FncDelayCustom f;
 

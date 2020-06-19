@@ -53,7 +53,7 @@ class FncDelayCustom : public tubex::Fnc
     double m_delay = 0.;
 };
 
-void contract(TubeVector& x)
+void contract(TubeVector& x, double& t0, bool incremental)
 {
   // Boundary constraints
 
