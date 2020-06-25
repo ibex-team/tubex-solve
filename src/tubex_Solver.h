@@ -57,6 +57,11 @@ namespace tubex
  
       // contraction mode :
       void set_contraction_mode(int contraction_mode) ; // 0 for CtcDynBasic, 1 for CtcDynCid, 2 for CtcDynCidGuess, 4 for CtcDeriv
+
+      // stopping mode
+      void set_stopping_mode(int stopping_mode) ; // 0 for max tube diam , 1 for max gate diam
+
+      void set_var3b_external_contraction (bool external_contraction) ; // 0 for not calling external contraction during var3b; 1 for calling external contraction during var3b
       void set_trace(int trace);
       double solving_time;
 
@@ -83,8 +88,10 @@ namespace tubex
       void clustering(std::list<std::pair<int,TubeVector> >& l_tubes);
       void clustering(std::list<TubeVector>& l_tubes);
       bool stopping_condition_met(const TubeVector& x);
+      bool gate_stopping_condition(const TubeVector& x);
+      bool diam_stopping_condition(const TubeVector& x);
       bool fixed_point_reached(double volume_before, double volume_after, float fxpt_ratio);
-      void propagation(TubeVector &x, tubex::Fnc* f, void (*ctc_func)(TubeVector&, double& t0, bool incremental), float propa_fxpt_ratio, bool incremental, double t0);
+      void propagation(TubeVector &x, tubex::Fnc* f, void (*ctc_func)(TubeVector&, double& t0, bool incremental), float propa_fxpt_ratio, bool incremental, double t0, bool v3b=false);
       void deriv_contraction (TubeVector &x, tubex::Fnc& f);
       void integration_contraction(TubeVector &x, tubex::Fnc& f, double t0, bool incremental);
       void picard_contraction (TubeVector &x, tubex::Fnc& f);
@@ -117,9 +124,11 @@ namespace tubex
       int m_max_slices=5000;
       int m_refining_mode=0;
       int m_contraction_mode=0; 
+      int m_stopping_mode=0;
       // Embedded graphics
       VIBesFigTubeVector *m_fig = NULL;
       int bisections=0;
+      bool m_var3b_external_contraction=true;
   };
 }
 
