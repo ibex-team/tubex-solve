@@ -758,10 +758,6 @@ void Solver::set_var3b_external_contraction (bool external_contraction)
       {
 	//	ctc_integration->set_incremental_mode(incremental);
 	ctc_integration->set_incremental_mode(false);
-	/*
-	if (x.volume() < 27.39 && x.volume() > 27.36) 
-	  ctc_integration->set_incremental_mode(false);
-	*/
 	//	cout << " before " << x.volume() << " t0 " << t0 << endl;
 	//	ctc_integration->contract(x,v,x[0].domain().lb(),FORWARD);
 	//	v = f.eval_vector(x);
@@ -804,9 +800,9 @@ void Solver::set_var3b_external_contraction (bool external_contraction)
     do
       {
 	volume_before_ctc = x.volume();
-	if (m_var3b_external_contraction) v3b=true; 
-	if (ctc_func && !v3b ) {ctc_func(x, t0, incremental);  // Other constraints contraction
-	//	if (ctc_func) {ctc_func(x, t0, incremental);
+	 
+	if (ctc_func && (!v3b || m_var3b_external_contraction))
+	  {ctc_func(x, t0, incremental);  // Other constraints contraction
 	  incremental=false;}
 	if (f){                     // ODE contraction
 	  

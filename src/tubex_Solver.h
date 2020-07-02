@@ -61,14 +61,15 @@ namespace tubex
       // stopping mode
       void set_stopping_mode(int stopping_mode) ; // 0 for max tube diam , 1 for max gate diam
 
+      // calling external contraction (function contract)
       void set_var3b_external_contraction (bool external_contraction) ; // 0 for not calling external contraction during var3b; 1 for calling external contraction during var3b
       void set_trace(int trace);
       double solving_time;
 
       /* the solve method, it as for parameters a tube vector x0 , and 3 possibilities
-         -  a tube vector contractor ctc_func (for general problems as Integrodifferential problems)
+         - a tube vector contractor ctc_func (for general problems as Integrodifferential problems or for using vnode)
          - a differential function (tubex::Fnc computing the derivative of a tube vector) (for pure ODEs)
-         - a differential function and a tube vector contractor (for ODE problems with side constraints)
+         - a differential function and a tube vector contractor (for ODE problems with side constraints, o for using vnode)
 
          The returned results are tubes containing the solutions. Two tubes have at least a disjoint gate.
       */
@@ -80,7 +81,7 @@ namespace tubex
       const std::list<TubeVector> solve(const TubeVector& x0, void (*ctc_func)(TubeVector&, double& t0, bool incremental));
       VIBesFigTubeVector* figure();
       static const ibex::BoolInterval solutions_contain(const std::list<TubeVector>& l_solutions, const TrajectoryVector& truth);
-      //      void (*ctc_func) (TubeVector&);
+
 
   protected:
       double one_finite_gate(TubeVector &x);
