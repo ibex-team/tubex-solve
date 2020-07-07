@@ -204,11 +204,13 @@ void Solver::set_var3b_external_contraction (bool external_contraction)
 	    int k=0; int new_slices=0;
 	    for ( Slice*s= x[i].first_slice(); s!=NULL; s=s->next_slice()){
 	      if (new_slices +nb_slices >= m_max_slices) break;
-	      if (slice_step[k] >= step_threshold){
+	      if (slice_step[k] >= step_threshold  && (s->domain().diam() > 
+						       (x.domain().diam() / (100 * nb_slices))))
+{
 		x[i].sample(s->domain().mid(),s);
 		s=s->next_slice();
 		new_slices++;
-	      }
+		  }
 	      k++;
 	    }
 	  }
