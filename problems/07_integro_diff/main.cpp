@@ -66,7 +66,7 @@ class FncIntegroDiff : public TFnc {
 
 };
 
-void contract(TubeVector& x)
+void contract(TubeVector& x, double t0, bool incremental)
 {
   // Boundary constraints
 

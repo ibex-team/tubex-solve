@@ -19,7 +19,7 @@ using namespace std;
 using namespace ibex;
 using namespace tubex;
 
-void contract(TubeVector& x)
+void contract(TubeVector& x , double t0, bool incremental)
 {
   // Boundary constraints
 

@@ -57,25 +57,32 @@ namespace tubex
  
       // contraction mode :
       void set_contraction_mode(int contraction_mode) ; // 0 for CtcDynBasic, 1 for CtcDynCid, 2 for CtcDynCidGuess, 4 for CtcDeriv
+
+      // stopping mode
+      void set_stopping_mode(int stopping_mode) ; // 0 for max tube diam , 1 for max gate diam
+
+      // calling external contraction (function contract)
+      void set_var3b_external_contraction (bool external_contraction) ; // 0 for not calling external contraction during var3b; 1 for calling external contraction during var3b
       void set_trace(int trace);
       double solving_time;
 
       /* the solve method, it as for parameters a tube vector x0 , and 3 possibilities
-         -  a tube vector contractor ctc_func (for general problems as Integrodifferential problems)
+         -  a tube vector contractor ctc_func (for general problems as Integrodifferential problems for using vnode )
          - a differential function (TFnc computing the derivative of a tube vector) (for pure ODEs)
          - a differential function and a tube vector contractor (for ODE problems with side constraints)
-
          The returned results are tubes containing the solutions. Two tubes have at least a disjoint gate.
       */
 
 
-      const std::list<TubeVector> solve(const TubeVector& x0, void (*ctc_func)(TubeVector&));
-      const std::list<TubeVector> solve(const TubeVector& x0, TFnc & f,void (*ctc_func)(TubeVector&)=NULL );
-      const std::list<TubeVector> solve(const TubeVector& x0, TFnc* f,void (*ctc_func)(TubeVector&));
+
+      //    const std::list<TubeVector> solve(const TubeVector& x0, void (*ctc_func)(TubeVector&));
+      const std::list<TubeVector> solve(const TubeVector& x0, TFnc & f,void (*ctc_func)(TubeVector&, double t0, bool incremental)=NULL );
+      const std::list<TubeVector> solve(const TubeVector& x0, TFnc* f,void (*ctc_func)(TubeVector&, double t0, bool incremental));
+      const std::list<TubeVector> solve(const TubeVector& x0, void (*ctc_func)(TubeVector&, double t0, bool incremental));
 
       VIBesFigTubeVector* figure();
       static const ibex::BoolInterval solutions_contain(const std::list<TubeVector>& l_solutions, const TrajectoryVector& truth);
-      //      void (*ctc_func) (TubeVector&);
+
 
   protected:
       double one_finite_gate(TubeVector &x);
@@ -83,12 +90,16 @@ namespace tubex
       void clustering(std::list<std::pair<int,TubeVector> >& l_tubes);
       void clustering(std::list<TubeVector>& l_tubes);
       bool stopping_condition_met(const TubeVector& x);
+      bool gate_stopping_condition(const TubeVector& x);
+      bool diam_stopping_condition(const TubeVector& x);
       bool fixed_point_reached(double volume_before, double volume_after, float fxpt_ratio);
-      void propagation(TubeVector &x, TFnc* f, void (*ctc_func)(TubeVector&), float propa_fxpt_ratio, bool incremental, double t0);
+
+      void propagation(TubeVector &x, TFnc* f, void (*ctc_func)(TubeVector&, double t0, bool incremental), float propa_fxpt_ratio, bool incremental, double t0, bool v3b=false);
       void deriv_contraction (TubeVector &x, TFnc& f);
       void integration_contraction(TubeVector &x, TFnc& f, double t0, bool incremental);
       void picard_contraction (TubeVector &x, TFnc& f);
-      void var3b(TubeVector &x,TFnc* f, void (*ctc_func)(TubeVector&));
+      void var3b(TubeVector &x,TFnc* f, void (*ctc_func)(TubeVector&, double t0, bool incremental));
+
       bool refining (TubeVector &x);
       double average_refining_threshold(const TubeVector &x, 
 				vector<double>& slice_step, vector<double>& t_refining);
@@ -117,9 +128,11 @@ namespace tubex
       int m_max_slices=5000;
       int m_refining_mode=0;
       int m_contraction_mode=0; 
+      int m_stopping_mode=0;
       // Embedded graphics
       VIBesFigTubeVector *m_fig = NULL;
       int bisections=0;
+      bool m_var3b_external_contraction=true;
   };
 }
 
