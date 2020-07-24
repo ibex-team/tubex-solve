@@ -36,53 +36,89 @@ namespace tubex
 
       Solver(const ibex::Vector& max_thickness);
       ~Solver();
+      /* Ratios used for stopping fixed point algorithms : all ratios are about the tube volume.
+	 For all these ratios, their possible values are :
+	 -1 : no call of the fixed point algorithm
+	 0  : one only call of the fixed point algorithm
+	 a value x between 0 and 1: the algorithm is called while the volume is reduced by a factor more than 1-x : for example, x=0.9 : the algorithm is called while the volume is reduced by more than 10%.
+	 a value > 1 : only used for refining_fxpt_ratio to ensure that the slicing will be done until max_slices is reached.
+      */
 
-      // Ratios used for stopping fixed point algorithms 
-      void set_refining_fxpt_ratio(float refining_fxpt_ratio);
+      /* slicing fixed point ratio : used for stopping the slicing*/
+      void set_refining_fxpt_ratio(float refining_fxpt_ratio); 
+
+      /* contraction fixed point ratio : used by the algorithm managing the whole sequence of contractors (external contract fonction and ODE contractor) called after a slicing and after a bisection*/
       void set_propa_fxpt_ratio(float propa_fxpt_ratio);
+      /* var3b fix point ratio (for managing the sequence of var3b calls) */
       void set_var3b_fxpt_ratio(float var3b_fxpt_ratio);
+      /* for managing the sequence of contractors used by the var3b subcontraction. (ctcDeriv and possibly CtcVnode).*/
       void set_var3b_propa_fxpt_ratio(float propa_fxpt_ratio);
 
-      // Slice choice for var3b
-      void set_var3b_timept(int var3b_timept); // where do the var3b contraction : 1 domain.ub(); -1 domain.lb(); 0 max_diam_gate(); 2 randomly domain.ub() or domain.lb()
+      /* Slice choice for var3b
+      where do the var3b contraction : 
+      1 domain.ub(); 
+      -1 domain.lb(); 
+      0 max_diam_gate(); 
+      2 randomly domain.ub() or domain.lb() */
+      void set_var3b_timept(int var3b_timept); 
 
-      // Slice choice for bisection
-      void set_bisection_timept (int bisection_timept); // where to bisect : 1 domain.ub(); -1 domain.lb(); 0 max_diam_gate(); 2 randomly domain.ub() or domain.lb(); 3 round robin  domain.ub() and domain.lb() ; -2 no bisection
+      /* Time choice for bisection 
+      1 domain.ub(); 
+      -1 domain.lb(); 
+      0 max_diam_gate(); 
+      2 randomly domain.ub() or domain.lb(); 
+      3 round robin  domain.ub() and domain.lb() ; 
+      -2 no bisection */
+      void set_bisection_timept (int bisection_timept); 
 
-      // no more refining when  max_slices is  reached
+      /* slicing limit :  no more refining when  max_slices is  reached */
       void set_max_slices(int max_slices); 
 
-      // refining mode : which slices to refine
-      void set_refining_mode(int refining_mode); // 0 : all slices ; 1 : one slice ; 2 : the slices with a difference between input and output gates greater  than average ; 3 : the slices with with a difference between input and output gates greater  than the median.
+      /* refining mode : which slices to refine
+         0 : all slices ; 
+         1 : one slice (the steepest) ; 
+         2 : the slices with a difference between input and output gates greater  than average ; 
+         3 : the slices with a difference between input and output gates greater  than the median.
+      */
+      void set_refining_mode(int refining_mode); 
  
-      // contraction mode :
-      void set_contraction_mode(int contraction_mode) ; // 0 for CtcDynBasic, 1 for CtcDynCid, 2 for CtcDynCidGuess, 4 for CtcDeriv
+      /* contraction mode : the ODE contractor called   
+      0 for CtcDynBasic ;
+      1 for CtcDynCid ;
+      2 for CtcDynCidGuess ;
+      4 for CtcDeriv ;*/
+      void set_contraction_mode(int contraction_mode) ;
 
-      // stopping mode
+      /* stopping mode : the stopping criterion in one branch of the search tree */
       void set_stopping_mode(int stopping_mode) ; // 0 for max tube diam , 1 for max gate diam
 
-      // calling external contraction (function contract)
-      void set_var3b_external_contraction (bool external_contraction) ; // 0 for not calling external contraction during var3b; 1 for calling external contraction during var3b
-      void set_trace(int trace);
-      double solving_time;
+      /* calling external contraction (function contract) during var3b subcontractions 
+      0 for not calling external contraction during var3b; 
+      1 for calling external contractor during var3b used for calling  ctcvnode inside var3b contractions.*/
+      void set_var3b_external_contraction (bool external_contraction) ; 
 
-      /* the solve method, it as for parameters a tube vector x0 , and 3 possibilities
-         -  a tube vector contractor ctc_func (for general problems as Integrodifferential problems for using vnode )
+      /* trace during search : 
+       0 for no trace
+       1 for trace message at each refining, bisection and solution 
+      */
+      void set_trace(int trace);  
+
+     
+      /* the solve method, it has for parameters a tube vector x0 , and 3 possibilities
+         -  a tube vector contractor ctc_func (for general problems as Integrodifferential problems and/or for using ctcvnode )
          - a differential function (TFnc computing the derivative of a tube vector) (for pure ODEs)
-         - a differential function and a tube vector contractor (for ODE problems with side constraints)
+         - a differential function and a tube vector contractor (for ODE problems with side constraints and/or calls to ctcVnode)
          The returned results are tubes containing the solutions. Two tubes have at least a disjoint gate.
       */
 
-
-
-      //    const std::list<TubeVector> solve(const TubeVector& x0, void (*ctc_func)(TubeVector&));
       const std::list<TubeVector> solve(const TubeVector& x0, TFnc & f,void (*ctc_func)(TubeVector&, double t0, bool incremental)=NULL );
       const std::list<TubeVector> solve(const TubeVector& x0, TFnc* f,void (*ctc_func)(TubeVector&, double t0, bool incremental));
       const std::list<TubeVector> solve(const TubeVector& x0, void (*ctc_func)(TubeVector&, double t0, bool incremental));
 
       VIBesFigTubeVector* figure();
       static const ibex::BoolInterval solutions_contain(const std::list<TubeVector>& l_solutions, const TrajectoryVector& truth);
-
+      /* the solving time of a solve call */
+      double solving_time;
 
   protected:
       double one_finite_gate(TubeVector &x);
@@ -95,9 +131,9 @@ namespace tubex
       bool fixed_point_reached(double volume_before, double volume_after, float fxpt_ratio);
 
       void propagation(TubeVector &x, TFnc* f, void (*ctc_func)(TubeVector&, double t0, bool incremental), float propa_fxpt_ratio, bool incremental, double t0, bool v3b=false);
-      void deriv_contraction (TubeVector &x, TFnc& f);
-      void integration_contraction(TubeVector &x, TFnc& f, double t0, bool incremental);
-      void picard_contraction (TubeVector &x, TFnc& f);
+      void deriv_contraction (TubeVector &x, const TFnc& f);
+      void integration_contraction(TubeVector &x, const TFnc& f, double t0, bool incremental);
+      void picard_contraction (TubeVector &x, const TFnc& f);
       void var3b(TubeVector &x,TFnc* f, void (*ctc_func)(TubeVector&, double t0, bool incremental));
 
       bool refining (TubeVector &x);
@@ -114,8 +150,8 @@ namespace tubex
 
       ibex::Vector m_max_thickness = ibex::Vector(1);
       float m_refining_fxpt_ratio = 0.005;
-      float m_propa_fxpt_ratio = 0.0 ;
-      float m_var3b_fxpt_ratio = 0.0; // one call no fix point
+      float m_propa_fxpt_ratio = 0.0 ; // one call no fix point
+      float m_var3b_fxpt_ratio = -1;   // no var3b
       float m_var3b_propa_fxpt_ratio = 0.0;
       /* Internal parameters for var3b algorithm */
       float m_var3b_bisection_minrate = 0.0001;
@@ -129,10 +165,14 @@ namespace tubex
       int m_refining_mode=0;
       int m_contraction_mode=0; 
       int m_stopping_mode=0;
+      bool m_var3b_external_contraction=true;
+
+     
+      /* number of bisections */
+      int bisections=0; 
+
       // Embedded graphics
       VIBesFigTubeVector *m_fig = NULL;
-      int bisections=0;
-      bool m_var3b_external_contraction=true;
   };
 }
 

@@ -57,7 +57,7 @@ int main()
   cout << " avant appel tubex function " << endl;
 
   TFunction f("x", "-x");
-cout << " apres appel tubex function " << endl;
+
 //y
  Tube::enable_syntheses(false);
     Vector epsilon(1, 0.005);
@@ -86,10 +86,9 @@ cout << " apres appel tubex function " << endl;
       x.set(v,t1 ); // final condition at t1
       cout << " avant solver " << endl;
       tubex::Solver solver(epsilon);
-      cout << " apres solver " << endl;
-      //      solver.set_refining_fxpt_ratio(0.9999);
+
       solver.set_refining_fxpt_ratio(2.0);
-      //      solver.set_propa_fxpt_ratio(0.9999);
+
       //solver.set_propa_fxpt_ratio(0.99);
       solver.set_propa_fxpt_ratio(0.);
 
@@ -104,9 +103,9 @@ cout << " apres appel tubex function " << endl;
       solver.set_bisection_timept(-2);
       solver.set_contraction_mode(2);
       //    solver.figure()->add_trajectoryvector(&truth, "truth");
-      cout << " avant solver " << endl;
+
       list<TubeVector> l_solutions = solver.solve(x, f);
-      cout << " apres solve " << endl;
+
       //      cout << "time " << (i+1)*step <<  "nb sol " << l_solutions.size() << endl;
       if (l_solutions.size()==1) { cout << " volume " << l_solutions.front().volume() << endl;
 	volume+=l_solutions.front().volume();

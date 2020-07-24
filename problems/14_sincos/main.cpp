@@ -8,7 +8,7 @@ using namespace tubex;
 
 void contract(TubeVector& x)
 {
-   TFunction f("x1", "x2" ,"(10*(x1-sin(x2))+cos(x2);1)");
+   TFunction f("x1", "x2" ,"(-10*(x1-sin(x2))+cos(x2);1)");
 
   CtcPicard ctc_picard;
   ctc_picard.preserve_slicing(false);

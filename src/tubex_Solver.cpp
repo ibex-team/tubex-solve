@@ -171,15 +171,6 @@ void Solver::set_var3b_external_contraction (bool external_contraction)
 	    }
 	  }
 	
-	/*
-	int k=0;
-	for (const Slice*s= x[0].first_slice(); s!=NULL; s=s->next_slice()){
-	  if (k+nb_slices >= m_max_slices) break;
-	  x.sample(s->tdomain().mid());
-	  s=s->next_slice();
-	  k++;
-	}
-	*/
 	return true;
       }
     else if (m_refining_mode== 2 || m_refining_mode== 3)
@@ -313,7 +304,7 @@ void Solver::set_var3b_external_contraction (bool external_contraction)
     solving_time=0.0;
     assert(x0.size() == m_max_thickness.size());
 
-    int i = 0;
+    int sol_i = 0;
     clock_t t_start = clock();
 
     #if GRAPHICS
@@ -350,7 +341,7 @@ void Solver::set_var3b_external_contraction (bool external_contraction)
 	propagation(x, f, ctc_func, m_propa_fxpt_ratio, false, t_bisect);
       else
 	propagation(x, f, ctc_func, m_propa_fxpt_ratio, true, t_bisect);
-      //      cout << " after propagation " << x << endl;
+      if (trace)    cout << " volume after contraction " << x.volume()  << endl;
       emptiness = x.is_empty();
       double volume_before_var3b;
       if (!emptiness && m_var3b_fxpt_ratio>=0.0){
@@ -367,19 +358,18 @@ void Solver::set_var3b_external_contraction (bool external_contraction)
 	       &&  m_var3b_fxpt_ratio>0.0 
 	       && !fixed_point_reached(volume_before_var3b, x.volume(), m_var3b_fxpt_ratio));
       }
-
+      if (trace) 
+	cout << " volume before refining " << x.volume()  << "  " << x[0].nb_slices() << "  slices " << endl;
       if (! emptiness)
 	do
       {
         volume_before_refining = x.volume();
-	cout << " volume before refining " <<  volume_before_refining << endl;
         // 1. Refining
-
 	if(m_refining_fxpt_ratio >= 0.0)
 	  if (! refining(x))
 	    {
-	      if (m_trace)
-		cout << " end refining " <<  volume_before_refining << " after  " << x.volume() << endl; 
+	      //	      if (m_trace)
+		//		cout << " end refining " <<  volume_before_refining << " after  " << x.volume() << endl; 
 	      break;}
 	if (m_trace) cout << " nb_slices after refining step " << x[0].nb_slices() << endl;
 	// 2. Propagations up to the fixed point
@@ -402,7 +392,7 @@ void Solver::set_var3b_external_contraction (bool external_contraction)
 		&& !(stopping_condition_met(x))
 		&& !fixed_point_reached(volume_before_var3b, x.volume(), m_var3b_fxpt_ratio));
 	  }
-	if (m_trace) cout << " volume after refining " <<  x.volume() << endl;
+	if (m_trace) cout << " volume after contraction " <<  x.volume() << endl;
       }
       
       while(!emptiness
@@ -424,8 +414,8 @@ void Solver::set_var3b_external_contraction (bool external_contraction)
               m_fig->show(true);
             #endif
 	    */
-              i++;
-	      if (m_trace) cout << "solution_" << i <<  " vol  " << x.volume() << " max thickness " << x.max_diam() << endl;
+              sol_i++;
+	      if (m_trace) cout << "solution_" << sol_i <<  " vol  " << x.volume() << " max thickness " << x.max_diam() << endl;
           }
 
           else
@@ -464,7 +454,7 @@ void Solver::set_var3b_external_contraction (bool external_contraction)
 	      
 	    bisections++;
 	    level++;
-	    cout << " t_bisection " << t_bisection << endl;
+	    //	    cout << " t_bisection " << t_bisection << endl;
             try{
 	      pair<TubeVector,TubeVector> p_x = x.bisect(t_bisection);
 
@@ -507,11 +497,10 @@ void Solver::set_var3b_external_contraction (bool external_contraction)
     	}
 	  
     }
-    //       cout << "Solutions: " << l_solutions.size() << "  (" << (int)((double)(clock() - t_start)/CLOCKS_PER_SEC) << "s)   " << flush;
     
     if (m_trace){
       cout << endl;
-      printf("Solving time : %.2fs\n", (double)(clock() - t_start)/CLOCKS_PER_SEC);
+      cout << "Solving time " << (double)(clock() - t_start)/CLOCKS_PER_SEC << endl;
     }
 
     int j = 0;
@@ -560,8 +549,8 @@ void Solver::set_var3b_external_contraction (bool external_contraction)
 	      }
     double total_time =  (double)(clock() - t_start)/CLOCKS_PER_SEC;
     solving_time=total_time;
-    if (m_trace)    printf("Total time with clustering: %.2fs\n", (double)(clock() - t_start)/CLOCKS_PER_SEC);
-    if (m_trace) cout << "bisections " << bisections << endl;
+    if (m_trace)  cout << "Total time with clustering: " << solving_time << endl;
+    if (m_trace) cout << "Number of bisections " << bisections << endl;
     return l_solutions;
     }
   
@@ -709,17 +698,18 @@ void Solver::set_var3b_external_contraction (bool external_contraction)
     return true;
   }
 
+
+  // TO DO : change with a simple ratio (without pow(vol, 1./n))
   bool Solver::fixed_point_reached(double volume_before, double volume_after, float fxpt_ratio)
   {
     if (fxpt_ratio > 1) return false;
     if(fxpt_ratio == 0. || volume_after == volume_before)
       return true;
-
     int n = m_max_thickness.size();
     return (std::pow(volume_after, 1./n) / std::pow(volume_before, 1./n)) >= fxpt_ratio;
   }
 
-  void Solver::picard_contraction (TubeVector &x, TFnc& f){
+  void Solver::picard_contraction (TubeVector &x, const TFnc& f){
     if (x.volume()>= DBL_MAX){
       //      cout << " volume before picard " << x.volume() << endl;
       CtcPicard ctc_picard;
@@ -729,15 +719,15 @@ void Solver::set_var3b_external_contraction (bool external_contraction)
     }
   }
 
-  void Solver::deriv_contraction (TubeVector &x, TFnc& f){
+  void Solver::deriv_contraction (TubeVector &x, const TFnc& f){
     CtcDeriv ctc;
-    //	    cout << " volume before ctc deriv " << volume_before_ctc << endl;
+    //    cout << " volume before ctc deriv " << x.volume() << " empty : " << x.is_empty() << endl;
     ctc.set_fast_mode(true);
     ctc.contract(x, f.eval_vector(x), TimePropag::FORWARD | TimePropag::BACKWARD);
-    //	   cout << "volume after ctc deriv " << x.volume() << endl;
+    //    cout << "volume after ctc deriv " << x.volume() << " empty : " << x.is_empty() <<endl;
   }
 
-  void Solver::integration_contraction(TubeVector &x, TFnc& f, double t0, bool incremental){
+  void Solver::integration_contraction(TubeVector &x, const TFnc& f, double t0, bool incremental){
     
     DynCtc* ctc_dyncid;
     CtcIntegration* ctc_integration;
@@ -757,31 +747,18 @@ void Solver::set_var3b_external_contraction (bool external_contraction)
     ctc_integration = new CtcIntegration (f,ctc_dyncid);
     if(x.volume() >= DBL_MAX) ctc_integration->set_picard_mode(true);
 
-    incremental=false ; // stronger contraction without incrementality ; comment this line for incrementality
     TubeVector v = f.eval_vector(x);
-    if (incremental) // incrementality if incremental and no other function
-      {
-	//	ctc_integration->set_incremental_mode(incremental);
-	ctc_integration->set_incremental_mode(false);
-	//	cout << " before " << x.volume() << " t0 " << t0 << endl;
-	//	ctc_integration->contract(x,v,x[0].tdomain().lb(),FORWARD);
-	//	v = f.eval_vector(x);
-	ctc_integration->contract(x,v,t0,TimePropag::FORWARD) ;
-	//	v = f.eval_vector(x);
-	//	cout << " after t0 forward " <<  x.volume() << endl;
-	ctc_integration->contract(x,v,x[0].tdomain().ub(),TimePropag::BACKWARD);
-	//	v = f.eval_vector(x);
-	//	cout << " after tf backward  " << x.volume()<<  endl;
-	ctc_integration->contract(x,v,t0,TimePropag::BACKWARD) ;
-	//	v = f.eval_vector(x);
-	ctc_integration->contract(x,v,x[0].tdomain().lb(),TimePropag::FORWARD);
-	//	ctc_integration->contract(x,v,t0,FORWARD) ;
-	//	cout << " after t0 backward " << x.volume()<< endl;
+    incremental=false ; // stronger contraction without incrementality ; comment this line for incrementality
 
-	//	cout << " end propagation " <<  x.volume() << endl;
-	//	ctc_integration->contract(x,v,t0,FORWARD) ;
-	//	ctc_integration->contract(x,v,x[0].tdomain().ub(),BACKWARD);
-	//	ctc_integration->contract(x,v,t0,BACKWARD);
+    if (incremental) // incrementality if incremental and no other function : not used (cf previous line)
+      {
+	ctc_integration->set_incremental_mode(true);
+
+	ctc_integration->contract(x,v,t0,TimePropag::FORWARD) ;
+	//	cout << " after t0 forward " <<  x << endl;
+	ctc_integration->contract(x,v,t0,TimePropag::BACKWARD) ;
+	//	cout << " after t0 backward " << x << endl;
+
       }
     else
       {
