@@ -99,17 +99,17 @@ namespace tubex
     m_contraction_mode=contraction_mode;
   }
 
- void Solver::set_stopping_mode(int stopping_mode)
+  void Solver::set_stopping_mode(int stopping_mode)
   {
     m_stopping_mode=stopping_mode;
   }
-void Solver::set_var3b_external_contraction (bool external_contraction)
+  void Solver::set_var3b_external_contraction (bool external_contraction)
   {
     m_var3b_external_contraction=external_contraction;
   }
 
 
-  double Solver::one_finite_gate(TubeVector &x){
+  double Solver::one_finite_gate(const TubeVector &x){
     bool finite=true;
     for (int i=0; i< x.size() ; i++)
       if (x[i].first_slice()->input_gate().diam() >= DBL_MAX)
@@ -127,7 +127,7 @@ void Solver::set_var3b_external_contraction (bool external_contraction)
     else{
       double t0= x[0].tdomain().lb()-1;
       for (int i=0 ;i< x.size(); i++){
-	for ( Slice*s= x[i].first_slice(); s!=NULL; s=s->next_slice())
+	for ( const Slice*s= x[i].first_slice(); s!=NULL; s=s->next_slice())
 	  if (s->input_gate().diam()<DBL_MAX && s->input_gate().diam()>0  )
 	    {return s->tdomain().lb();}
       }
@@ -289,6 +289,75 @@ void Solver::set_var3b_external_contraction (bool external_contraction)
 	return step_threshold;
   }
 
+  void Solver::bisection(const TubeVector& x, list<pair<pair<int,double>,TubeVector> > &s, int level) {
+    if (m_trace) cout << "Bisection... (level " << level << ")" << endl;
+	    //	    if (f) bisection_guess (x,*f);  //TODO use bisection_guess
+	    double t_bisection;
+	      if (m_bisection_timept==0){
+		if (x.volume() < DBL_MAX)
+		  x.max_gate_diam(t_bisection);
+		else
+		  t_bisection=one_finite_gate(x);
+	      }
+		  
+	      else if (m_bisection_timept==1)
+		t_bisection=x[0].tdomain().ub();
+	      else if  (m_bisection_timept==-1)
+		t_bisection=x[0].tdomain().lb();
+	      else if  (m_bisection_timept==2){
+		if (rand()%2)
+		  t_bisection=x[0].tdomain().lb();
+		else
+		  t_bisection=x[0].tdomain().ub();
+	      }
+	      else if  (m_bisection_timept==3){
+	      if (level%2)
+		t_bisection=x[0].tdomain().lb();
+	      else
+		t_bisection=x[0].tdomain().ub();
+	      }
+
+	   
+	      
+	    bisections++;
+	    level++;
+	    //	    cout << " t_bisection " << t_bisection << endl;
+            try{
+	      pair<TubeVector,TubeVector> p_x = x.bisect(t_bisection);
+
+	      //   s.push_back(make_pair(level, p_x.second));   // breadth first variant
+	      //   s.push_back (make_pair(level, p_x.first));
+	    
+	      s.push_front(make_pair(make_pair(level,t_bisection), p_x.second));       // depth first variant
+	      s.push_front(make_pair(make_pair(level,t_bisection), p_x.first));
+              if (m_trace)	    
+		cout << " t_bisection " << t_bisection << " x volume " << x.volume() << " nb_slices " << x.nb_slices()  << endl;
+	      //	      cout << "last slice v0 f" << * (p_x.first[0].last_slice())  << endl;
+	      //	      cout << "last slice v1 f" << * (p_x.first[1].last_slice())  << endl;
+	      //	      cout << "last slice v0 s" << * (p_x.second[0].last_slice())  << endl;
+	      //	      cout << "last slice v1 s" << * (p_x.second[1].last_slice())  << endl;
+	    }
+	    catch (Exception &)   // when the bisection time was not bisectable, change to largest gate
+	      {	 
+		// cout << " bisection exception " << endl;
+		x.max_gate_diam(t_bisection);
+
+	        pair<TubeVector,TubeVector> p_x = x.bisect(t_bisection);
+
+             if (m_trace)	      cout << " t_bisection " << t_bisection << " x volume " << x.volume() << " nb_slices " << x.nb_slices()  << endl;
+	     //	      cout << "last slice v0 f" << * (p_x.first[0].slice(t_bisection))  << endl;
+	     //	      cout << "last slice v1 f" << * (p_x.first[1].slice(t_bisection))  << endl;
+	     //	      cout << "last slice v0 s" << * (p_x.second[0].slice(t_bisection))  << endl;
+	     //	      cout << "last slice v1 s" << * (p_x.second[1].slice(t_bisection))  << endl;
+
+
+	    //   s.push_back(make_pair(level, p_x.second));   // breadth first variant
+	    //   s.push_back (make_pair(level, p_x.first));
+	    
+		s.push_front(make_pair(make_pair(level,t_bisection), p_x.second));       // depth first variant
+		s.push_front(make_pair(make_pair(level,t_bisection), p_x.first));
+	      }
+  }
 
   
   const list<TubeVector> Solver::solve(const TubeVector& x0,  TFnc& f, void (*ctc_func)(TubeVector&, double t0, bool incremental)) { return (solve(x0,&f,ctc_func));}
@@ -337,11 +406,11 @@ void Solver::set_var3b_external_contraction (bool external_contraction)
       double volume_before_refining;
       
       //      cout << " before propagation " << x << endl;
-      if (level==0) // && x.volume()> 1.e100)
+      if (level==0) 
 	propagation(x, f, ctc_func, m_propa_fxpt_ratio, false, t_bisect);
       else
 	propagation(x, f, ctc_func, m_propa_fxpt_ratio, true, t_bisect);
-      if (trace)    cout << " volume after contraction " << x.volume()  << endl;
+
       emptiness = x.is_empty();
       double volume_before_var3b;
       if (!emptiness && m_var3b_fxpt_ratio>=0.0){
@@ -358,8 +427,7 @@ void Solver::set_var3b_external_contraction (bool external_contraction)
 	       &&  m_var3b_fxpt_ratio>0.0 
 	       && !fixed_point_reached(volume_before_var3b, x.volume(), m_var3b_fxpt_ratio));
       }
-      if (trace) 
-	cout << " volume before refining " << x.volume()  << "  " << x[0].nb_slices() << "  slices " << endl;
+      if (trace && !emptiness)    cout << " volume after contraction " << x.volume()  << endl;      
       if (! emptiness)
 	do
       {
@@ -368,10 +436,13 @@ void Solver::set_var3b_external_contraction (bool external_contraction)
 	if(m_refining_fxpt_ratio >= 0.0)
 	  if (! refining(x))
 	    {
-	      //	      if (m_trace)
-		//		cout << " end refining " <<  volume_before_refining << " after  " << x.volume() << endl; 
+	      //if (m_trace)
+		//cout << " end refining " <<  volume_before_refining << " after  " << x.volume() << endl; 
 	      break;}
-	if (m_trace) cout << " nb_slices after refining step " << x[0].nb_slices() << endl;
+	if (m_trace) {
+	  cout << " volume before refining " << volume_before_refining << endl;
+	  cout << " nb_slices after refining step " << x[0].nb_slices() << endl;
+	}
 	// 2. Propagations up to the fixed point
 
 	propagation(x, f, ctc_func, m_propa_fxpt_ratio, false, x[0].tdomain().lb());
@@ -392,7 +463,7 @@ void Solver::set_var3b_external_contraction (bool external_contraction)
 		&& !(stopping_condition_met(x))
 		&& !fixed_point_reached(volume_before_var3b, x.volume(), m_var3b_fxpt_ratio));
 	  }
-	if (m_trace) cout << " volume after contraction " <<  x.volume() << endl;
+	if (m_trace && !emptiness) cout << " volume after contraction " <<  x.volume() << endl;
       }
       
       while(!emptiness
@@ -408,7 +479,6 @@ void Solver::set_var3b_external_contraction (bool external_contraction)
             l_solutions.push_back(x);
 	    /*
             #if GRAPHICS // displaying solution
-
 	      ostringstream o; o << "solution_" << i;
 	      m_fig->add_tubevector(&l_solutions.back(), o.str());
               m_fig->show(true);
@@ -420,83 +490,12 @@ void Solver::set_var3b_external_contraction (bool external_contraction)
 
           else
           {
-            if (m_trace) cout << "Bisection... (level " << level << ")" << endl;
-	    //	    if (f) bisection_guess (x,*f);  //TODO use bisection_guess
-	    double t_bisection;
-	    //	    cout << " domain " << x[0].domain() << " " <<x[0].domain().lb() << endl;
-	    //	    cout << "m_bisection_timept" << m_bisection_timept << endl;
+            bisection(x,s,level);
+	  }
 
-	      if (m_bisection_timept==0){
-		if (x.volume() < DBL_MAX)
-		  x.max_gate_diam(t_bisection);
-		else
-		  t_bisection=one_finite_gate(x);
-	      }
-		  
-	      else if (m_bisection_timept==1)
-		t_bisection=x[0].tdomain().ub();
-	      else if  (m_bisection_timept==-1)
-		t_bisection=x[0].tdomain().lb();
-	      else if  (m_bisection_timept==2){
-		if (rand()%2)
-		  t_bisection=x[0].tdomain().lb();
-		else
-		  t_bisection=x[0].tdomain().ub();
-	      }
-	      else if  (m_bisection_timept==3){
-	      if (level%2)
-		t_bisection=x[0].tdomain().lb();
-	      else
-		t_bisection=x[0].tdomain().ub();
-	      }
-
-	   
-	      
-	    bisections++;
-	    level++;
-	    //	    cout << " t_bisection " << t_bisection << endl;
-            try{
-	      pair<TubeVector,TubeVector> p_x = x.bisect(t_bisection);
-
-	      //   s.push_back(make_pair(level, p_x.second));   // breadth first variant
-	      //   s.push_back (make_pair(level, p_x.first));
-	    
-	      s.push_front(make_pair(make_pair(level,t_bisection), p_x.second));       // depth first variant
-	      s.push_front(make_pair(make_pair(level,t_bisection), p_x.first));
-              if (m_trace)	      cout << " t_bisection " << t_bisection << " x volume " << x.volume() << " nb_slices " << x.nb_slices()  << endl;
-	      //	      cout << "last slice v0 f" << * (p_x.first[0].last_slice())  << endl;
-	      //	      cout << "last slice v1 f" << * (p_x.first[1].last_slice())  << endl;
-	      //	      cout << "last slice v0 s" << * (p_x.second[0].last_slice())  << endl;
-	      //	      cout << "last slice v1 s" << * (p_x.second[1].last_slice())  << endl;
-	    }
-	    catch (Exception &)   // when the bisection time was not bisectable, change to largest gate
-	      {	 
-		cout << " exception " << endl;
-		x.max_gate_diam(t_bisection);
-		//                t_bisection=x.largest_slice()->tdomain().mid();
-	        pair<TubeVector,TubeVector> p_x = x.bisect(t_bisection);
-
-             if (m_trace)	      cout << " t_bisection " << t_bisection << " x volume " << x.volume() << " nb_slices " << x.nb_slices()  << endl;
-	     //	      cout << "last slice v0 f" << * (p_x.first[0].slice(t_bisection))  << endl;
-	     //	      cout << "last slice v1 f" << * (p_x.first[1].slice(t_bisection))  << endl;
-	     //	      cout << "last slice v0 s" << * (p_x.second[0].slice(t_bisection))  << endl;
-	     //	      cout << "last slice v1 s" << * (p_x.second[1].slice(t_bisection))  << endl;
-
-
-	    //   s.push_back(make_pair(level, p_x.second));   // breadth first variant
-	    //   s.push_back (make_pair(level, p_x.first));
-	    
-		s.push_front(make_pair(make_pair(level,t_bisection), p_x.second));       // depth first variant
-		s.push_front(make_pair(make_pair(level,t_bisection), p_x.first));
-	      }
-
-
-	    //  cout << " t_bisection " << t_bisection << " x volume " << x.volume() << " nb_slices " << x.nb_slices() <<   endl;
-             
-     	  }
     	}
-	  
     }
+    
     
     if (m_trace){
       cout << endl;
@@ -774,7 +773,7 @@ void Solver::set_var3b_external_contraction (bool external_contraction)
 
 
 
-
+  /* v3b=true  indicates that  propagation is called from var3b */
   void Solver::propagation(TubeVector &x, TFnc* f, void (*ctc_func)(TubeVector&, double t0, bool incremental), float propa_fxpt_ratio, bool incremental, double t0 , bool v3b)
 
   {

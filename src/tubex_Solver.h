@@ -121,7 +121,7 @@ namespace tubex
       double solving_time;
 
   protected:
-      double one_finite_gate(TubeVector &x);
+      double one_finite_gate(const TubeVector &x);
       bool empty_intersection(TubeVector& t1, TubeVector& t2);
       void clustering(std::list<std::pair<int,TubeVector> >& l_tubes);
       void clustering(std::list<TubeVector>& l_tubes);
@@ -130,6 +130,7 @@ namespace tubex
       bool diam_stopping_condition(const TubeVector& x);
       bool fixed_point_reached(double volume_before, double volume_after, float fxpt_ratio);
 
+      void bisection (const TubeVector &x, list<pair<pair<int,double>,TubeVector> > &s, int level);
       void propagation(TubeVector &x, TFnc* f, void (*ctc_func)(TubeVector&, double t0, bool incremental), float propa_fxpt_ratio, bool incremental, double t0, bool v3b=false);
       void deriv_contraction (TubeVector &x, const TFnc& f);
       void integration_contraction(TubeVector &x, const TFnc& f, double t0, bool incremental);
