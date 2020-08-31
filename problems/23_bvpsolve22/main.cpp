@@ -1,6 +1,6 @@
 /** 
  *  tubex-lib - Examples
- *  Solver testcase  23  bvpsolve22
+ *  Solver testcase  23  bvpsolve22 (case ksi=0.1)
  * ----------------------------------------------------------------------------
  *
  *  \date       2020
@@ -31,12 +31,11 @@ int main()
     TubeVector x(domain,2);
     IntervalVector v(2);
     v[0]=Interval(0.,0.);
-     //    v[1]=Interval(-1e300,1e300);
     v[1]=Interval(-20,20);
     x.set(v, 0.); // ini
     v[0]=Interval(0.5,0.5);
     v[1]=Interval(-20,20);
-   // v[1]=Interval(-10.,10.);
+
     x.set(v,1.);
 
     double eps0=0.05;
@@ -81,6 +80,5 @@ int main()
     cout << "temps ="<< temps << endl<<endl;
     return 0;
     
-    return 0;
 }
 

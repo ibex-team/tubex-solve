@@ -7,7 +7,7 @@
  *              the GNU Lesser General Public License (LGPL).
  *
  *  Author(s) : Simon Rohou, Bertrand Neveu
- *  Bug fixes : -
+ *  Bug fixes : 
  *  Created   : 2018
  * ---------------------------------------------------------------------------- */
 
@@ -125,7 +125,6 @@ namespace tubex
     if (finite==true)
       return x[0].last_slice()->tdomain().ub();
     else{
-      double t0= x[0].tdomain().lb()-1;
       for (int i=0 ;i< x.size(); i++){
 	for ( const Slice*s= x[i].first_slice(); s!=NULL; s=s->next_slice())
 	  if (s->input_gate().diam()<DBL_MAX && s->input_gate().diam()>0  )
@@ -133,7 +132,6 @@ namespace tubex
       }
     }
     throw tubex::Exception (" solver " , "solver unable to bisect ");
-
   }
 	       
     
@@ -166,11 +164,14 @@ namespace tubex
 	    for ( Slice*s= x[i].first_slice(); s!=NULL; s=s->next_slice()){
 	      if (k+nb_slices >= m_max_slices) break;
 	      x[i].sample(s->tdomain().mid(),s);
-	      s=s->next_slice();
-	      k++;
+	      if (x[i].nb_slices()==k+nb_slices+1){ // refining is actually done
+		k++;
+		s=s->next_slice();
+	      }
 	    }
+
 	  }
-	
+	//	cout << " end refining step " << x.nb_slices() << endl;
 	return true;
       }
     else if (m_refining_mode== 2 || m_refining_mode== 3)
@@ -188,7 +189,7 @@ namespace tubex
       double step_threshold;
       if (m_refining_mode==2) step_threshold= average_refining_threshold(x, slice_step, t_refining);
       else if (m_refining_mode==3) step_threshold= median_refining_threshold(x, slice_step, t_refining);
-      //cout << " step threshold " << step_threshold << " nb_slices " << nb_slices << endl;
+      // cout << " step threshold " << step_threshold << " nb_slices " << nb_slices << endl;
       
       for (int i=0; i<x.size();i++)
 	  {
@@ -209,7 +210,7 @@ namespace tubex
 	  }
 
         
-      if (nb_slices < m_max_slices && x[0].nb_slices() == nb_slices)  // patch to avoid infinite loops (the selected slices could not be bisected)
+      if (nb_slices < m_max_slices && x[0].nb_slices() == nb_slices)  // patch to avoid infinite loops (the selected slices could not be refined)
 	for (int k=0; k<t_refining.size(); k++){
 	  //cout << " sample " << k << endl;
 	  x.sample(t_refining[k]);
@@ -427,7 +428,7 @@ namespace tubex
 	       &&  m_var3b_fxpt_ratio>0.0 
 	       && !fixed_point_reached(volume_before_var3b, x.volume(), m_var3b_fxpt_ratio));
       }
-      if (trace && !emptiness)    cout << " volume after contraction " << x.volume()  << endl;      
+      if (trace && !emptiness)    cout <<  " volume after contraction " << x.volume()  << endl;      
       if (! emptiness)
 	do
       {
@@ -436,8 +437,8 @@ namespace tubex
 	if(m_refining_fxpt_ratio >= 0.0)
 	  if (! refining(x))
 	    {
-	      //if (m_trace)
-		//cout << " end refining " <<  volume_before_refining << " after  " << x.volume() << endl; 
+	      if (m_trace)
+		cout << " end refining " <<  volume_before_refining << " after  " << x.volume() << endl; 
 	      break;}
 	if (m_trace) {
 	  cout << " volume before refining " << volume_before_refining << endl;
@@ -485,7 +486,7 @@ namespace tubex
             #endif
 	    */
               sol_i++;
-	      if (m_trace) cout << "solution_" << sol_i <<  " vol  " << x.volume() << " max thickness " << x.max_diam() << endl;
+	      if (m_trace) cout << "solution_" << sol_i <<  " vol  " << x.volume() << " max diam " << x.max_diam() << endl;
           }
 
           else
@@ -535,13 +536,13 @@ namespace tubex
 	}
 
     }
-
+    int i=1;
     for(it = l_solutions.begin(); it != l_solutions.end(); ++it){
             #if GRAPHICS // displaying solution
               i++;
 	      ostringstream o; o << "solution_" << i;
 	      const TubeVector* tv= &(*it);
-	      m_fig->add_tubevector(tv, o.str());
+	      m_fig->add_tube(tv, o.str());
               m_fig->show(true);
             #endif
 	    
@@ -780,13 +781,20 @@ namespace tubex
     if  (propa_fxpt_ratio <0.0) return;
     double volume_before_ctc;
     bool first_iteration=true;
+    bool external_contraction=true;
     do
       {
 	volume_before_ctc = x.volume();
-	 
-	if (ctc_func && (!v3b || m_var3b_external_contraction))
+	//	cout << " v3b " << v3b << "  " << t0 << "  " << m_var3b_external_contraction <<endl;
+	if (ctc_func && external_contraction && (!v3b || m_var3b_external_contraction))
 	  {ctc_func(x, t0, incremental);  // Other constraints contraction
-	  incremental=false;}
+	  incremental=false;
+	  /*
+	  if (fixed_point_reached(volume_before_ctc, x.volume(), propa_fxpt_ratio))
+	    external_contraction=false;
+	  */
+	  }
+	      
 	if (f){                     // ODE contraction
 	  
 	  if (m_contraction_mode==4){   // CtcPicard + CtcDeriv
