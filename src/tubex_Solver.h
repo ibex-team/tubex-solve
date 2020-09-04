@@ -131,7 +131,10 @@ namespace tubex
       bool fixed_point_reached(double volume_before, double volume_after, float fxpt_ratio);
 
       void bisection (const TubeVector &x, list<pair<pair<int,double>,TubeVector> > &s, int level);
-      void propagation(TubeVector &x, TFnc* f, void (*ctc_func)(TubeVector&, double t0, bool incremental), float propa_fxpt_ratio, bool incremental, double t0, bool v3b=false);
+      void fixed_point_contraction (TubeVector &x, TFnc* f, void (*ctc_func)(TubeVector&, double t0, bool incremental), float propa_fxpt_ratio, bool incremental, double t0, bool v3b=false);
+      void contraction (TubeVector &x, TFnc * f,
+			void (*ctc_func) (TubeVector&,double t0,bool incremental),
+			bool incremental, double t0 , bool v3b);
       void deriv_contraction (TubeVector &x, const TFnc& f);
       void integration_contraction(TubeVector &x, const TFnc& f, double t0, bool incremental);
       void picard_contraction (TubeVector &x, const TFnc& f);

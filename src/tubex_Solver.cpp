@@ -406,11 +406,11 @@ namespace tubex
       bool emptiness;
       double volume_before_refining;
       
-      //      cout << " before propagation " << x << endl;
+      //      cout << " before fixed_point_contraction " << x << endl;
       if (level==0) 
-	propagation(x, f, ctc_func, m_propa_fxpt_ratio, false, t_bisect);
+	fixed_point_contraction(x, f, ctc_func, m_propa_fxpt_ratio, false, t_bisect);
       else
-	propagation(x, f, ctc_func, m_propa_fxpt_ratio, true, t_bisect);
+	fixed_point_contraction(x, f, ctc_func, m_propa_fxpt_ratio, true, t_bisect);
 
       emptiness = x.is_empty();
       double volume_before_var3b;
@@ -444,9 +444,9 @@ namespace tubex
 	  cout << " volume before refining " << volume_before_refining << endl;
 	  cout << " nb_slices after refining step " << x[0].nb_slices() << endl;
 	}
-	// 2. Propagations up to the fixed point
+	// 2. Fixed_Point_Contractions up to the fixed point
 
-	propagation(x, f, ctc_func, m_propa_fxpt_ratio, false, x[0].tdomain().lb());
+	fixed_point_contraction(x, f, ctc_func, m_propa_fxpt_ratio, false, x[0].tdomain().lb());
 	// 3.      
 	emptiness = x.is_empty();
 	double volume_before_var3b;
@@ -455,9 +455,9 @@ namespace tubex
 	  do
 	    { 
 	      volume_before_var3b=x.volume();
-	      // cout << " volume before var3b "  << x.volume() << endl;
+	      //	      cout << " volume before var3b "  << x.volume() << " nb_slices " << x.nb_slices() << endl;
 	      var3b(x, f, ctc_func);
-	      // cout << " volume after var3b "  << x.volume() << endl;
+	      //	      cout << " volume after var3b "  << x.volume() << " nb_slices " << x.nb_slices() << endl;
 	      emptiness = x.is_empty();
 	    }
 	  while(!emptiness  
@@ -774,51 +774,47 @@ namespace tubex
 
 
 
-  /* v3b=true  indicates that  propagation is called from var3b */
-  void Solver::propagation(TubeVector &x, TFnc* f, void (*ctc_func)(TubeVector&, double t0, bool incremental), float propa_fxpt_ratio, bool incremental, double t0 , bool v3b)
-
+  /* v3b=true  indicates that  fixed_point_contraction is called from var3b */
+  void Solver::fixed_point_contraction(TubeVector &x, TFnc* f, void (*ctc_func)(TubeVector&, double t0, bool incremental), float propa_fxpt_ratio, bool incremental, double t0 , bool v3b)
   {
     if  (propa_fxpt_ratio <0.0) return;
     double volume_before_ctc;
-    bool first_iteration=true;
-    bool external_contraction=true;
     do
       {
 	volume_before_ctc = x.volume();
-	//	cout << " v3b " << v3b << "  " << t0 << "  " << m_var3b_external_contraction <<endl;
-	if (ctc_func && external_contraction && (!v3b || m_var3b_external_contraction))
-	  {ctc_func(x, t0, incremental);  // Other constraints contraction
-	  incremental=false;
-	  /*
-	  if (fixed_point_reached(volume_before_ctc, x.volume(), propa_fxpt_ratio))
-	    external_contraction=false;
-	  */
-	  }
-	      
-	if (f){                     // ODE contraction
-	  
-	  if (m_contraction_mode==4){   // CtcPicard + CtcDeriv
-	    	    picard_contraction(x,*f);
-	    	    deriv_contraction(x,*f);
-	  }
-    
-	  else if (m_contraction_mode <=2 ){                           // CtcIntegration 
-	    if (first_iteration)
-	      integration_contraction(x,*f,t0,incremental);
-	    else
-	      integration_contraction(x,*f,t0,false);
-	  }
-	  //	  cout << " tube after contraction " << x << " volume after " << x.volume() << endl;
-	  
-	}
-	first_iteration=false;
+	contraction (x, f, ctc_func, incremental, t0, v3b);
+	incremental=false;
       }
 
     while(!(x.is_empty()) 
 	  && propa_fxpt_ratio >0
 	  && !fixed_point_reached(volume_before_ctc, x.volume(), propa_fxpt_ratio));
-    //    cout << " tube after propagation " <<  x << " volume after " << x.volume() << endl;
+    //    cout << " tube after fixed_point_contraction " <<  x << " volume after " << x.volume() << endl;
   }
+
+  void Solver::contraction (TubeVector &x, TFnc * f,
+			    void (*ctc_func) (TubeVector&,double t0,bool incremental),
+			    bool incremental, double t0 , bool v3b)
+  {
+    if (ctc_func && (!v3b || m_var3b_external_contraction))
+      {ctc_func(x, t0, incremental);  // Other constraints contraction
+	incremental=false;
+      }
+			      
+    if (f){                     // ODE contraction
+	  
+      if (m_contraction_mode==4){   // CtcPicard + CtcDeriv
+	picard_contraction(x,*f);
+	deriv_contraction(x,*f);
+      }
+      else if (m_contraction_mode <=2 ){                   // CtcIntegration 
+	  integration_contraction(x,*f,t0,incremental);
+      }
+	  //	  cout << " tube after contraction " << x << " volume after " << x.volume() << " nb_slices  " << x[0].nb_slices() <<endl;
+	  
+    }
+  }
+
 
 
 
@@ -858,11 +854,12 @@ namespace tubex
 
 	     TubeVector branch_x= p_x.first;
 	     //	     cout << " before var3b prop1 " << branch_x << endl;
-	     propagation(branch_x, f, ctc_func, m_var3b_propa_fxpt_ratio, true, t_bisection, true);
+	     fixed_point_contraction(branch_x, f, ctc_func, m_var3b_propa_fxpt_ratio, true, t_bisection, true);
 	     //	     cout << " after var3b prop1 " << endl;
 	     if (branch_x.is_empty())
 	       x=p_x.second;
-	     else {x = p_x.second | branch_x ; break;}
+	     //	     else {x = p_x.second | branch_x ; break;}
+	     else {p_x.second|= branch_x; x = p_x.second  ; break;} // no slicing
 
 	     rate= m_var3b_bisection_ratefactor*rate;
 
@@ -871,7 +868,8 @@ namespace tubex
 	    {break;}
 	}
 
-	propagation(x,f, ctc_func, m_var3b_propa_fxpt_ratio, true, t_bisection, true);
+	//	fixed_point_contraction(x,f, ctc_func, m_var3b_propa_fxpt_ratio, true, t_bisection, true);
+	fixed_point_contraction(x,f, NULL, m_var3b_propa_fxpt_ratio, true, t_bisection, true); // no external call
 
 	rate = 1 - m_var3b_bisection_minrate;
        
@@ -880,11 +878,12 @@ namespace tubex
 	    pair<TubeVector,TubeVector> p_x = x.bisect(t_bisection,k,rate);
 	     TubeVector branch_x= p_x.second;
 	     //	     cout << " before var3b prop2 " << endl;
-	     propagation(branch_x, f, ctc_func, m_var3b_propa_fxpt_ratio, true, t_bisection, true);
+	     fixed_point_contraction(branch_x, f, ctc_func, m_var3b_propa_fxpt_ratio, true, t_bisection, true);
 	     //	     cout << " after var3b prop2" << endl;
 	     if (branch_x.is_empty())
 	       x=p_x.first;
-	     else {x = p_x.first | branch_x ; break;}
+	     //	     else {x = p_x.first | branch_x ; break;}
+	     else {p_x.first |= branch_x ; x= p_x.first ; break;}   // no slicing
 	     rate=1-m_var3b_bisection_ratefactor*(1-rate);
 
 	  }
@@ -892,7 +891,8 @@ namespace tubex
 	    {break;}
 	}
 
-	propagation(x,f , ctc_func, m_var3b_propa_fxpt_ratio, true , t_bisection,true);
+	//	fixed_point_contraction(x,f , ctc_func, m_var3b_propa_fxpt_ratio, true , t_bisection,true);
+	fixed_point_contraction(x,f , NULL, m_var3b_propa_fxpt_ratio, true , t_bisection,true); // no external call
 
        
       }
