@@ -154,7 +154,7 @@ namespace tubex
       return true;
     }
     else if 
-      (m_refining_mode==0)
+      (m_refining_mode==0 || x.volume()>= DBL_MAX)
       { // all slices are refined 
 
 	
@@ -163,8 +163,10 @@ namespace tubex
 	    int k=0;
 	    for ( Slice*s= x[i].first_slice(); s!=NULL; s=s->next_slice()){
 	      if (k+nb_slices >= m_max_slices) break;
+	      double wid=s->tdomain().diam();
 	      x[i].sample(s->tdomain().mid(),s);
-	      if (x[i].nb_slices()==k+nb_slices+1){ // refining is actually done
+	      //	      if (x[i].nb_slices()==k+nb_slices+1){ // refining is actually done
+	      if (s->tdomain().diam() < wid){ // refining is actually done
 		k++;
 		s=s->next_slice();
 	      }
@@ -199,12 +201,12 @@ namespace tubex
 
 	      if (slice_step[k] >= step_threshold  && (s->tdomain().diam() > 
 						       (x.tdomain().diam() / (100 * nb_slices))))
-{
+		{
 		x[i].sample(s->tdomain().mid(),s);
 
 		s=s->next_slice();
 		new_slices++;
-		  }
+		}
 	      k++;
 	    }
 	  }
@@ -868,8 +870,8 @@ namespace tubex
 	    {break;}
 	}
 
-	//	fixed_point_contraction(x,f, ctc_func, m_var3b_propa_fxpt_ratio, true, t_bisection, true);
-	fixed_point_contraction(x,f, NULL, m_var3b_propa_fxpt_ratio, true, t_bisection, true); // no external call
+	fixed_point_contraction(x,f, ctc_func, m_var3b_propa_fxpt_ratio, true, t_bisection, true);
+	// fixed_point_contraction(x,f, NULL, m_var3b_propa_fxpt_ratio, true, t_bisection, true); // no external call
 
 	rate = 1 - m_var3b_bisection_minrate;
        
@@ -891,8 +893,8 @@ namespace tubex
 	    {break;}
 	}
 
-	//	fixed_point_contraction(x,f , ctc_func, m_var3b_propa_fxpt_ratio, true , t_bisection,true);
-	fixed_point_contraction(x,f , NULL, m_var3b_propa_fxpt_ratio, true , t_bisection,true); // no external call
+	fixed_point_contraction(x,f , ctc_func, m_var3b_propa_fxpt_ratio, true , t_bisection,true);
+	//fixed_point_contraction(x,f , NULL, m_var3b_propa_fxpt_ratio, true , t_bisection,true); // no external call
 
        
       }
