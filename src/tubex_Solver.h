@@ -145,8 +145,8 @@ namespace tubex
 				vector<double>& slice_step, vector<double>& t_refining);
       double median_refining_threshold(const TubeVector &x, 
 				vector<double>& slice_step, vector<double>& t_refining);
-      bool refining_with_threshold(TubeVector & v, int nb_slices);
-
+      bool refining_with_threshold(TubeVector & x, int nb_slices);
+      void refining_all_slices(TubeVector & x, int nb_slices);
 
       void bisection_guess (TubeVector & x, TFnc& f);
       std::pair<int,std::pair<double,double>> bisection_guess(TubeVector x, TubeVector v, DynCtc* slice_ctr, TFnc& fnc, int variant);
@@ -161,7 +161,8 @@ namespace tubex
       float m_var3b_bisection_minrate = 0.0001;
       float m_var3b_bisection_maxrate = 0.4;
       int m_var3b_bisection_ratefactor=2;
-
+      void print_solutions(const list<TubeVector> & l_solutions);
+      void display_solutions(const list<TubeVector> & l_solutions);
       int m_var3b_timept=0;
       int m_bisection_timept=0;
       int m_trace=0;
@@ -170,7 +171,7 @@ namespace tubex
       int m_contraction_mode=0; 
       int m_stopping_mode=0;
       bool m_var3b_external_contraction=true;
-
+ 
      
       /* number of bisections */
       int bisections=0; 

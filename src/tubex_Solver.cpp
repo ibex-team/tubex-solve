@@ -156,31 +156,30 @@ namespace tubex
     else if 
       (m_refining_mode==0 || x.volume()>= DBL_MAX)
       { // all slices are refined 
+	refining_all_slices(x, nb_slices);
+	//	cout << " end refining step " << x.nb_slices() << endl;
+	return true;
+      }
+    else if (m_refining_mode== 2 || m_refining_mode== 3)
+      return refining_with_threshold(x, nb_slices);
+  }
 
-	
-	for (int i=0; i<x.size();i++)
+  void Solver::refining_all_slices(TubeVector & x, int nb_slices) {
+    for (int i=0; i<x.size();i++)
 	  {
 	    int k=0;
 	    for ( Slice*s= x[i].first_slice(); s!=NULL; s=s->next_slice()){
 	      if (k+nb_slices >= m_max_slices) break;
 	      double wid=s->tdomain().diam();
 	      x[i].sample(s->tdomain().mid(),s);
-	      //	      if (x[i].nb_slices()==k+nb_slices+1){ // refining is actually done
 	      if (s->tdomain().diam() < wid){ // refining is actually done
 		k++;
 		s=s->next_slice();
 	      }
 	    }
-
 	  }
-	//	cout << " end refining step " << x.nb_slices() << endl;
-	return true;
-      }
-    else if (m_refining_mode== 2 || m_refining_mode== 3)
-      return refining_with_threshold(x, nb_slices);
-
-   
   }
+
 
   // the refining is focused on "slices " with a larger than average (or median) max difference (in all dimensions)  between input and output gates
   bool Solver::refining_with_threshold (TubeVector & x ,int nb_slices){
@@ -188,7 +187,7 @@ namespace tubex
       vector<double> t_refining;
       vector<double>  slice_step;
 
-      double step_threshold;
+      double step_threshold=0;
       if (m_refining_mode==2) step_threshold= average_refining_threshold(x, slice_step, t_refining);
       else if (m_refining_mode==3) step_threshold= median_refining_threshold(x, slice_step, t_refining);
       // cout << " step threshold " << step_threshold << " nb_slices " << nb_slices << endl;
@@ -505,12 +504,14 @@ namespace tubex
       cout << "Solving time " << (double)(clock() - t_start)/CLOCKS_PER_SEC << endl;
     }
 
+
+    print_solutions(l_solutions);
+    /*
     int j = 0;
     list<TubeVector>::iterator it;
     for(it = l_solutions.begin(); it != l_solutions.end(); ++it)
     {
       j++;
-      
       if (m_trace) 
 	cout << "  " << j << ": "
            << *it <<  ", ti↦" << (*it)(it->tdomain().lb()) <<  ", tf↦" << (*it)(it->tdomain().ub())
@@ -519,12 +520,18 @@ namespace tubex
            << endl;
       
     }
-    while (l_solutions.size()>1){
+    */
+    while (l_solutions.size()>1)
+      {
       int k = l_solutions.size();
       clustering(l_solutions);
       if (k==l_solutions.size())
 	{ if (m_trace) cout << " end of clustering " << endl;
 	  break;}
+      if (m_trace) 
+	print_solutions(l_solutions);
+       
+		     /*
       j=0;
       for(it = l_solutions.begin(); it != l_solutions.end(); ++it)
 	{
@@ -536,19 +543,10 @@ namespace tubex
 	       << " volume : " << it->volume() 
 	       << endl;
 	}
+		     */
 
-    }
-    int i=1;
-    for(it = l_solutions.begin(); it != l_solutions.end(); ++it){
-            #if GRAPHICS // displaying solution
-              i++;
-	      ostringstream o; o << "solution_" << i;
-	      const TubeVector* tv= &(*it);
-	      m_fig->add_tube(tv, o.str());
-              m_fig->show(true);
-            #endif
-	    
-	      }
+      }
+    
     double total_time =  (double)(clock() - t_start)/CLOCKS_PER_SEC;
     solving_time=total_time;
     if (m_trace)  cout << "Total time with clustering: " << solving_time << endl;
@@ -663,8 +661,36 @@ namespace tubex
   }
 
 
-	
-	  
+  void Solver::print_solutions (const list<TubeVector>& l_solutions){
+    int j = 0;
+    list<TubeVector>::const_iterator it;
+    for(it = l_solutions.begin(); it != l_solutions.end(); ++it)
+    {
+      j++;
+      if (m_trace) 
+	cout << "  " << j << ": "
+           << *it <<  ", ti↦" << (*it)(it->tdomain().lb()) <<  ", tf↦" << (*it)(it->tdomain().ub())
+	     << " (max diam: " << it->max_diam() << ")"
+	   << " volume : " << it->volume() 
+           << endl;
+    }
+  }
+    
+  void Solver::display_solutions(const list<TubeVector> & l_solutions) {
+      int i=0;
+      list<TubeVector>::const_iterator it;
+      for(it = l_solutions.begin(); it != l_solutions.end(); ++it){
+            #if GRAPHICS // displaying solution
+              i++;
+	      ostringstream o; o << "solution_" << i;
+	      const TubeVector* tv= &(*it);
+	      m_fig->add_tube(tv, o.str());
+              m_fig->show(true);
+            #endif
+    
+      }
+  }
+
   VIBesFigTubeVector* Solver::figure()
   {
     return m_fig;
