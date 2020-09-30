@@ -323,7 +323,6 @@ namespace tubex
 	      
 	    bisections++;
 	    level++;
-	    //	    cout << " t_bisection " << t_bisection << endl;
             try{
 	      pair<TubeVector,TubeVector> p_x = x.bisect(t_bisection);
 
@@ -334,10 +333,16 @@ namespace tubex
 	      s.push_front(make_pair(make_pair(level,t_bisection), p_x.first));
               if (m_trace)	    
 		cout << " t_bisection " << t_bisection << " x volume " << x.volume() << " nb_slices " << x.nb_slices()  << endl;
-	      //	      cout << "last slice v0 f" << * (p_x.first[0].last_slice())  << endl;
-	      //	      cout << "last slice v1 f" << * (p_x.first[1].last_slice())  << endl;
-	      //	      cout << "last slice v0 s" << * (p_x.second[0].last_slice())  << endl;
-	      //	      cout << "last slice v1 s" << * (p_x.second[1].last_slice())  << endl;
+	      //	      cout << "last slice v0 f" << * (p_x.first[0].last_slice()->outputgate())  << endl;
+		//	      cout << "last slice v1 f" << (p_x.first[1].last_slice()->output_gate())  << endl;
+	      //	      cout << "last slice v0 s" << * (p_x.second[0].last_slice()->outputgate())  << endl;
+		//	      cout << "last slice v1 s" <<  (p_x.second[1].last_slice()->output_gate())  << endl;
+	      //	      cout << "first  slice v0 f" << * (p_x.first[0].first_slice()->input_gate())  << endl;
+		//	      cout << "first slice v1 f" << (p_x.first[1].first_slice()->input_gate())  << endl;
+	      //	      cout << "first slice v0 s" << * (p_x.second[0].first_slice()->input_gate())  << endl;
+		//	      cout << "first slice v1 s" << (p_x.second[1].first_slice()->input_gate())  << endl;
+
+
 	    }
 	    catch (Exception &)   // when the bisection time was not bisectable, change to largest gate
 	      {	 
@@ -470,7 +475,10 @@ namespace tubex
       
       while(!emptiness
 	    && !(stopping_condition_met(x))
-	    && ( x.volume() >= DBL_MAX  || !fixed_point_reached(volume_before_refining, x.volume(), m_refining_fxpt_ratio ) || level > 0));
+	    && ( //x.volume() >= DBL_MAX  || 
+		!fixed_point_reached(volume_before_refining, x.volume(), m_refining_fxpt_ratio ) 
+		 //	 || level > 0
+		 ));
       // 4. Bisection
       emptiness=x.is_empty();
       if(!emptiness)
@@ -727,14 +735,13 @@ namespace tubex
   }
 
 
-  // TO DO : change with a simple ratio (without pow(vol, 1./n))
+
   bool Solver::fixed_point_reached(double volume_before, double volume_after, float fxpt_ratio)
   {
     if (fxpt_ratio > 1) return false;
     if(fxpt_ratio == 0. || volume_after == volume_before)
       return true;
-    int n = m_max_thickness.size();
-    return (std::pow(volume_after, 1./n) / std::pow(volume_before, 1./n)) >= fxpt_ratio;
+    return (volume_after / volume_before >= fxpt_ratio);
   }
 
   void Solver::picard_contraction (TubeVector &x, const TFnc& f){
