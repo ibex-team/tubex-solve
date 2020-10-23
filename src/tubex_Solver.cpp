@@ -333,14 +333,14 @@ namespace tubex
 	      s.push_front(make_pair(make_pair(level,t_bisection), p_x.first));
               if (m_trace)	    
 		cout << " t_bisection " << t_bisection << " x volume " << x.volume() << " nb_slices " << x.nb_slices()  << endl;
-	      //	      cout << "last slice v0 f" << * (p_x.first[0].last_slice()->outputgate())  << endl;
-		//	      cout << "last slice v1 f" << (p_x.first[1].last_slice()->output_gate())  << endl;
-	      //	      cout << "last slice v0 s" << * (p_x.second[0].last_slice()->outputgate())  << endl;
-		//	      cout << "last slice v1 s" <<  (p_x.second[1].last_slice()->output_gate())  << endl;
-	      //	      cout << "first  slice v0 f" << * (p_x.first[0].first_slice()->input_gate())  << endl;
-		//	      cout << "first slice v1 f" << (p_x.first[1].first_slice()->input_gate())  << endl;
-	      //	      cout << "first slice v0 s" << * (p_x.second[0].first_slice()->input_gate())  << endl;
-		//	      cout << "first slice v1 s" << (p_x.second[1].first_slice()->input_gate())  << endl;
+	      //	      	      cout << "last slice v0 f" <<  (p_x.first[0].last_slice()->output_gate())  << endl;
+	      //	      cout << "last slice v1 f" << (p_x.first[1].last_slice()->output_gate())  << endl;
+	      //	      	      cout << "last slice v0 s" <<  (p_x.second[0].last_slice()->output_gate())  << endl;
+	      //		      cout << "last slice v1 s" <<  (p_x.second[1].last_slice()->output_gate())  << endl;
+	      //      cout << "first  slice v0 f" <<  (p_x.first[0].first_slice()->input_gate())  << endl;
+	      //      cout << "first slice v1 f" << (p_x.first[1].first_slice()->input_gate())  << endl;
+	      //      cout << "first slice v0 s" << (p_x.second[0].first_slice()->input_gate())  << endl;
+	      //      cout << "first slice v1 s" << (p_x.second[1].first_slice()->input_gate())  << endl;
 
 
 	    }
@@ -352,10 +352,10 @@ namespace tubex
 	        pair<TubeVector,TubeVector> p_x = x.bisect(t_bisection);
 
              if (m_trace)	      cout << " t_bisection " << t_bisection << " x volume " << x.volume() << " nb_slices " << x.nb_slices()  << endl;
-	     //	      cout << "last slice v0 f" << * (p_x.first[0].slice(t_bisection))  << endl;
-	     //	      cout << "last slice v1 f" << * (p_x.first[1].slice(t_bisection))  << endl;
-	     //	      cout << "last slice v0 s" << * (p_x.second[0].slice(t_bisection))  << endl;
-	     //	      cout << "last slice v1 s" << * (p_x.second[1].slice(t_bisection))  << endl;
+	     //	     cout << " slice v0 f " << * (p_x.first[0].slice(t_bisection))  << endl;
+	     //	     cout << " slice v1 f " << * (p_x.first[1].slice(t_bisection))  << endl;
+	     //	     cout << " slice v0 s " << * (p_x.second[0].slice(t_bisection))  << endl;
+	     //	     cout << " slice v1 s " << * (p_x.second[1].slice(t_bisection))  << endl;
 
 
 	    //   s.push_back(make_pair(level, p_x.second));   // breadth first variant
@@ -835,7 +835,6 @@ namespace tubex
       {ctc_func(x, t0, incremental);  // Other constraints contraction
 	incremental=false;
       }
-			      
     if (f){                     // ODE contraction
 	  
       if (m_contraction_mode==4){   // CtcPicard + CtcDeriv
