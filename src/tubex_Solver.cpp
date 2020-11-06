@@ -208,10 +208,14 @@ namespace tubex
 		}
 	      k++;
 	    }
+	    //	    cout << "new slices " << new_slices << endl;
 	  }
 
         
-      if (nb_slices < m_max_slices && x[0].nb_slices() == nb_slices)  // patch to avoid infinite loops (the selected slices could not be refined)
+      //      if (nb_slices < m_max_slices && x[0].nb_slices() == nb_slices)  // patch to avoid infinite loops (the selected slices could not be refined)
+      //      cout << " nb_slices " << "  after " << x[0].nb_slices() << " 1.01 " <<  1.01* nb_slices << endl;
+      // minimum new slices : 0.01 nb_slices
+      if (nb_slices < m_max_slices && x[0].nb_slices() < 1.01* nb_slices)  // patch to avoid infinite loops (the selected slices could not be refined)
 	for (int k=0; k<t_refining.size(); k++){
 	  //cout << " sample " << k << endl;
 	  x.sample(t_refining[k]);
@@ -237,15 +241,16 @@ namespace tubex
 	for (const Slice*slice=s[0]; slice!=NULL; slice=slice->next_slice()){
 
 	  t_refining.push_back(slice->tdomain().mid());
+	  //          cout << " t_refining " << slice->tdomain().mid() << endl;
 	  double step_max= fabs(slice->output_gate().mid() - slice->input_gate().mid());
-
+	  //	  cout << " step 0 " << step_max << endl;
 	  for (int k=1; k< x.size(); k++){
-
+	    //	    cout << " step 1 " << s[k]->output_gate().mid() - s[k]->input_gate().mid() << endl;
 	    step_max=std::max(step_max,fabs(s[k]->output_gate().mid() - s[k]->input_gate().mid()));
 
 	    s[k]=s[k]->next_slice();
 	  }
-	  
+	  //	  cout << " step max " << step_max << endl;
 	  slice_step.push_back(step_max);
 	  if (step_max < DBL_MAX)  // to not take into account infinite gates in average computation
 	    {
@@ -256,6 +261,7 @@ namespace tubex
 	
 	sort(stepmed.begin(),stepmed.end());
 	step_threshold =stepmed[stepmed.size()/2];
+	//	cout << " threshold " << step_threshold << endl;
 	return step_threshold;
   }
 
@@ -417,23 +423,13 @@ namespace tubex
 	fixed_point_contraction(x, f, ctc_func, m_propa_fxpt_ratio, false, t_bisect);
       else
 	fixed_point_contraction(x, f, ctc_func, m_propa_fxpt_ratio, true, t_bisect);
+      
 
       emptiness = x.is_empty();
-      double volume_before_var3b;
-      if (!emptiness && m_var3b_fxpt_ratio>=0.0){
-	do
-	  { 
-	    volume_before_var3b=x.volume();
-	    //	    cout << " volume before var3b "  << x.volume() << endl;
-	    var3b(x, f, ctc_func);
-	    //	    cout << " volume after var3b "  << x.volume() << endl;
-	    emptiness = x.is_empty();
-	  }
-	while (!emptiness  
-	       && !(stopping_condition_met(x))
-	       &&  m_var3b_fxpt_ratio>0.0 
-	       && !fixed_point_reached(volume_before_var3b, x.volume(), m_var3b_fxpt_ratio));
-      }
+      if (!emptiness && m_var3b_fxpt_ratio>=0.0)
+	fixed_point_var3b(x, f, ctc_func);
+
+      emptiness = x.is_empty();
       if (trace && !emptiness)    cout <<  " volume after contraction " << x.volume()  << endl;      
       if (! emptiness)
 	do
@@ -454,22 +450,13 @@ namespace tubex
 
 	fixed_point_contraction(x, f, ctc_func, m_propa_fxpt_ratio, false, x[0].tdomain().lb());
 	// 3.      
+	
 	emptiness = x.is_empty();
-	double volume_before_var3b;
-	if (!emptiness && m_var3b_fxpt_ratio >= 0.0){
-
-	  do
-	    { 
-	      volume_before_var3b=x.volume();
-	      //	      cout << " volume before var3b "  << x.volume() << " nb_slices " << x.nb_slices() << endl;
-	      var3b(x, f, ctc_func);
-	      //	      cout << " volume after var3b "  << x.volume() << " nb_slices " << x.nb_slices() << endl;
-	      emptiness = x.is_empty();
-	    }
-	  while(!emptiness  
-		&& !(stopping_condition_met(x))
-		&& !fixed_point_reached(volume_before_var3b, x.volume(), m_var3b_fxpt_ratio));
-	  }
+		
+	//	double volume_before_var3b;
+	if (!emptiness && m_var3b_fxpt_ratio >= 0.0)
+	  fixed_point_var3b(x, f, ctc_func);
+	emptiness = x.is_empty();
 	if (m_trace && !emptiness) cout << " volume after contraction " <<  x.volume() << endl;
       }
       
@@ -706,11 +693,12 @@ namespace tubex
 
   bool Solver::stopping_condition_met(const TubeVector& x)
   {
-
-    if (m_stopping_mode==0)
-      return diam_stopping_condition (x);
-    else
+    if (m_stopping_mode==1)
       return gate_stopping_condition (x);
+    else if (m_stopping_mode==2)
+      return boundarygate_stopping_condition (x);
+    else
+      return diam_stopping_condition (x);
   }
 
   bool Solver::diam_stopping_condition(const TubeVector& x)
@@ -734,6 +722,20 @@ namespace tubex
     return true;
   }
 
+ bool Solver::boundarygate_stopping_condition(const TubeVector& x)
+  {
+    for(int i = 0 ; i < x.size() ; i++)
+      {
+	
+	if(
+	   x[i].first_slice()->input_gate().diam()  > m_max_thickness[i]
+	   ||
+	   x[i].last_slice()->output_gate().diam()  > m_max_thickness[i]
+	   )
+	  return false;
+      }
+    return true;
+  }
 
 
   bool Solver::fixed_point_reached(double volume_before, double volume_after, float fxpt_ratio)
@@ -754,12 +756,20 @@ namespace tubex
     }
   }
 
-  void Solver::deriv_contraction (TubeVector &x, const TFnc& f){
+  void Solver::deriv_contraction (TubeVector &x, const TFnc& f, double t0, bool incremental){
     CtcDeriv ctc;
-    //    cout << " volume before ctc deriv " << x.volume() << " empty : " << x.is_empty() << endl;
+    //    cout << " x before ctc deriv " << x << " volume " << x.volume() << " empty : " << x.is_empty() << endl;
     ctc.set_fast_mode(true);
-    ctc.contract(x, f.eval_vector(x), TimePropag::FORWARD | TimePropag::BACKWARD);
-    //    cout << "volume after ctc deriv " << x.volume() << " empty : " << x.is_empty() <<endl;
+    //    ctc.contract(x, f.eval_vector(x), TimePropag::FORWARD);
+    //    ctc.contract(x, f.eval_vector(x), TimePropag::BACKWARD);
+    if (incremental && t0==x.tdomain().lb())
+      ctc.contract(x, f.eval_vector(x), TimePropag::FORWARD);
+    else if (incremental && t0==x.tdomain().ub())
+      ctc.contract(x, f.eval_vector(x), TimePropag::BACKWARD);
+    else
+      ctc.contract(x, f.eval_vector(x), TimePropag::FORWARD | TimePropag::BACKWARD);
+
+    //    cout << " x  after ctc deriv " << x << " volume " << x.volume() << " empty : " << x.is_empty() <<endl;
   }
 
   void Solver::integration_contraction(TubeVector &x, const TFnc& f, double t0, bool incremental){
@@ -780,6 +790,7 @@ namespace tubex
     ctc_dyncid->set_fast_mode(true);
 
     ctc_integration = new CtcIntegration (f,ctc_dyncid);
+    //    if(x.volume() >= DBL_MAX ||  x.nb_slices() == 1 ) ctc_integration->set_picard_mode(true);
     if(x.volume() >= DBL_MAX) ctc_integration->set_picard_mode(true);
 
     TubeVector v = f.eval_vector(x);
@@ -819,14 +830,21 @@ namespace tubex
 	volume_before_ctc = x.volume();
 	contraction (x, f, ctc_func, incremental, t0, v3b);
 	incremental=false;
+
+	/*
+
+	if (!(x.is_empty()) && m_var3b_fxpt_ratio>=0.0 && !v3b)
+	fixed_point_var3b(x, f, ctc_func);
+	*/
       }
 
     while(!(x.is_empty()) 
 	  && propa_fxpt_ratio >0
 	  && !fixed_point_reached(volume_before_ctc, x.volume(), propa_fxpt_ratio));
-    //    cout << " tube after fixed_point_contraction " <<  x << " volume after " << x.volume() << endl;
+    //    cout << v3b << " tube after fixed_point_contraction " <<  x << " volume after " << x.volume() << endl;
   }
-
+  
+  
   void Solver::contraction (TubeVector &x, TFnc * f,
 			    void (*ctc_func) (TubeVector&,double t0,bool incremental),
 			    bool incremental, double t0 , bool v3b)
@@ -839,7 +857,7 @@ namespace tubex
 	  
       if (m_contraction_mode==4){   // CtcPicard + CtcDeriv
 	picard_contraction(x,*f);
-	deriv_contraction(x,*f);
+	deriv_contraction(x,*f, t0, incremental);
       }
       else if (m_contraction_mode <=2 ){                   // CtcIntegration 
 	  integration_contraction(x,*f,t0,incremental);
@@ -848,14 +866,32 @@ namespace tubex
 	  
     }
   }
+  
+  // -------------------- VAR3B ----------------------------------
 
 
-
+  void Solver::fixed_point_var3b(TubeVector &x, TFnc * f,void (*ctc_func) (TubeVector&,double t0,bool incremental)){
+      double volume_before_var3b;
+      double emptiness;
+      do
+	  { 
+	    volume_before_var3b=x.volume();
+	    //	    cout << " volume before var3b "  << x.volume() << endl;
+	    var3b(x, f, ctc_func);
+	    //	    cout << " volume after var3b "  << x.volume() << endl;
+	    emptiness = x.is_empty();
+	  }
+      while (!emptiness  
+	     && !(stopping_condition_met(x))
+	     &&  m_var3b_fxpt_ratio>0.0 
+	     && !fixed_point_reached(volume_before_var3b, x.volume(), m_var3b_fxpt_ratio));
+    }
 
   void Solver::var3b(TubeVector &x, TFnc * f,void (*ctc_func) (TubeVector&,double t0,bool incremental))
   {
     //    cout << " volume before var3b " << x.volume() << endl;
     if(m_var3b_fxpt_ratio < 0. || x.volume() >= DBL_MAX)
+    //if(m_var3b_fxpt_ratio < 0.)
       return;
 
     int contraction_mode = m_contraction_mode;
@@ -926,6 +962,7 @@ namespace tubex
 	}
 
 	fixed_point_contraction(x,f , ctc_func, m_var3b_propa_fxpt_ratio, true , t_bisection,true);
+	
 	//fixed_point_contraction(x,f , NULL, m_var3b_propa_fxpt_ratio, true , t_bisection,true); // no external call
 
        

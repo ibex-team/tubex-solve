@@ -80,6 +80,7 @@ namespace tubex
          2 : the slices with a difference between input and output gates greater  than average ; 
          3 : the slices with a difference between input and output gates greater  than the median.
       */
+
       void set_refining_mode(int refining_mode); 
  
       /* contraction mode : the ODE contractor called   
@@ -90,7 +91,7 @@ namespace tubex
       void set_contraction_mode(int contraction_mode) ;
 
       /* stopping mode : the stopping criterion in one branch of the search tree */
-      void set_stopping_mode(int stopping_mode) ; // 0 for max tube diam , 1 for max gate diam
+      void set_stopping_mode(int stopping_mode) ; // 0 for max tube diam , 1 for max gate diam , 2 for max boundary gate diam
 
       /* calling external contraction (function contract) during var3b subcontractions 
       0 for not calling external contraction during var3b; 
@@ -128,6 +129,7 @@ namespace tubex
       bool stopping_condition_met(const TubeVector& x);
       bool gate_stopping_condition(const TubeVector& x);
       bool diam_stopping_condition(const TubeVector& x);
+      bool boundarygate_stopping_condition(const TubeVector& x);
       bool fixed_point_reached(double volume_before, double volume_after, float fxpt_ratio);
 
       void bisection (const TubeVector &x, list<pair<pair<int,double>,TubeVector> > &s, int level);
@@ -135,9 +137,10 @@ namespace tubex
       void contraction (TubeVector &x, TFnc * f,
 			void (*ctc_func) (TubeVector&,double t0,bool incremental),
 			bool incremental, double t0 , bool v3b);
-      void deriv_contraction (TubeVector &x, const TFnc& f);
+      void deriv_contraction (TubeVector &x, const TFnc& f, double t0, bool incremental );
       void integration_contraction(TubeVector &x, const TFnc& f, double t0, bool incremental);
       void picard_contraction (TubeVector &x, const TFnc& f);
+      void fixed_point_var3b(TubeVector &x, TFnc * f,void (*ctc_func) (TubeVector& ,double t0, bool incremental));
       void var3b(TubeVector &x,TFnc* f, void (*ctc_func)(TubeVector&, double t0, bool incremental));
 
       bool refining (TubeVector &x);
@@ -158,7 +161,8 @@ namespace tubex
       float m_var3b_fxpt_ratio = -1;   // no var3b
       float m_var3b_propa_fxpt_ratio = 0.0;
       /* Internal parameters for var3b algorithm */
-      float m_var3b_bisection_minrate = 0.0001;
+      //      float m_var3b_bisection_minrate = 0.0001;
+      float m_var3b_bisection_minrate = 0.01;
       float m_var3b_bisection_maxrate = 0.4;
       int m_var3b_bisection_ratefactor=2;
       void print_solutions(const list<TubeVector> & l_solutions);
