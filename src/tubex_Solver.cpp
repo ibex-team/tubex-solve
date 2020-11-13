@@ -182,7 +182,7 @@ namespace tubex
 
 
   // the refining is focused on "slices " with a larger than average (or median) max difference (in all dimensions)  between input and output gates
-  bool Solver::refining_with_threshold (TubeVector & x ,int nb_slices){
+  bool Solver::refining_with_threshold (TubeVector & x ,int nb_slices_before){
     
       vector<double> t_refining;
       vector<double>  slice_step;
@@ -190,16 +190,16 @@ namespace tubex
       double step_threshold=0;
       if (m_refining_mode==2) step_threshold= average_refining_threshold(x, slice_step, t_refining);
       else if (m_refining_mode==3) step_threshold= median_refining_threshold(x, slice_step, t_refining);
-      // cout << " step threshold " << step_threshold << " nb_slices " << nb_slices << endl;
+      // cout << " step threshold " << step_threshold << " nb_slices before" << nb_slices_before << endl;
       
       for (int i=0; i<x.size();i++)
 	  {
 	    int k=0; int new_slices=0;
 	    for ( Slice*s= x[i].first_slice(); s!=NULL; s=s->next_slice()){
-	      if (new_slices +nb_slices >= m_max_slices) break;
+	      if (new_slices +nb_slices_before >= m_max_slices) break;
 
 	      if (slice_step[k] >= step_threshold  && (s->tdomain().diam() > 
-						       (x.tdomain().diam() / (100 * nb_slices))))
+						       (x.tdomain().diam() / (100 * nb_slices_before))))
 		{
 		x[i].sample(s->tdomain().mid(),s);
 
@@ -212,12 +212,10 @@ namespace tubex
 	  }
 
         
-      //      if (nb_slices < m_max_slices && x[0].nb_slices() == nb_slices)  // patch to avoid infinite loops (the selected slices could not be refined)
-      //      cout << " nb_slices " << "  after " << x[0].nb_slices() << " 1.01 " <<  1.01* nb_slices << endl;
-      // minimum new slices : 0.01 nb_slices
-      if (nb_slices < m_max_slices && x[0].nb_slices() < 1.01* nb_slices)  // patch to avoid infinite loops (the selected slices could not be refined)
+      //      if (nb_slices_before < m_max_slices && x[0].nb_slices() == nb_slices_before)  // patch to avoid infinite loops (the selected slices could not be refined)
+      int nb_slices= x[0].nb_slices();
+      if (nb_slices < m_max_slices && nb_slices < 1.01* nb_slices_before)  // minimum new slices : 0.01 nb_slices
 	for (int k=0; k<t_refining.size(); k++){
-	  //cout << " sample " << k << endl;
 	  x.sample(t_refining[k]);
           nb_slices++;
 	  if (nb_slices >= m_max_slices) break;
@@ -462,10 +460,8 @@ namespace tubex
       
       while(!emptiness
 	    && !(stopping_condition_met(x))
-	    && ( //x.volume() >= DBL_MAX  || 
-		!fixed_point_reached(volume_before_refining, x.volume(), m_refining_fxpt_ratio ) 
-		 //	 || level > 0
-		 ));
+	    && ( 
+		!fixed_point_reached(volume_before_refining, x.volume(), m_refining_fxpt_ratio)));
       // 4. Bisection
       emptiness=x.is_empty();
       if(!emptiness)
@@ -831,11 +827,6 @@ namespace tubex
 	contraction (x, f, ctc_func, incremental, t0, v3b);
 	incremental=false;
 
-	/*
-
-	if (!(x.is_empty()) && m_var3b_fxpt_ratio>=0.0 && !v3b)
-	fixed_point_var3b(x, f, ctc_func);
-	*/
       }
 
     while(!(x.is_empty()) 
@@ -873,26 +864,28 @@ namespace tubex
   void Solver::fixed_point_var3b(TubeVector &x, TFnc * f,void (*ctc_func) (TubeVector&,double t0,bool incremental)){
       double volume_before_var3b;
       double emptiness;
+      if (m_var3b_fxpt_ratio>=0.0)
       do
 	  { 
 	    volume_before_var3b=x.volume();
+	    if  (x.volume() < DBL_MAX)
 	    //	    cout << " volume before var3b "  << x.volume() << endl;
-	    var3b(x, f, ctc_func);
+	      var3b(x, f, ctc_func);
 	    //	    cout << " volume after var3b "  << x.volume() << endl;
 	    emptiness = x.is_empty();
 	  }
       while (!emptiness  
 	     && !(stopping_condition_met(x))
-	     &&  m_var3b_fxpt_ratio>0.0 
 	     && !fixed_point_reached(volume_before_var3b, x.volume(), m_var3b_fxpt_ratio));
     }
 
   void Solver::var3b(TubeVector &x, TFnc * f,void (*ctc_func) (TubeVector&,double t0,bool incremental))
   {
     //    cout << " volume before var3b " << x.volume() << endl;
-    if(m_var3b_fxpt_ratio < 0. || x.volume() >= DBL_MAX)
+
     //if(m_var3b_fxpt_ratio < 0.)
-      return;
+    //    if(m_var3b_fxpt_ratio < 0. || x.volume() >= DBL_MAX)
+    //      return;
 
     int contraction_mode = m_contraction_mode;
     m_contraction_mode=4;  // var3B calls CtcDeriv as internal contractor 
@@ -923,9 +916,9 @@ namespace tubex
 	    {pair<TubeVector,TubeVector> p_x = x.bisect(t_bisection,k,rate);
 
 	     TubeVector branch_x= p_x.first;
-	     //	     cout << " before var3b prop1 " << branch_x << endl;
+
 	     fixed_point_contraction(branch_x, f, ctc_func, m_var3b_propa_fxpt_ratio, true, t_bisection, true);
-	     //	     cout << " after var3b prop1 " << endl;
+
 	     if (branch_x.is_empty())
 	       x=p_x.second;
 	     //	     else {x = p_x.second | branch_x ; break;}
@@ -939,7 +932,6 @@ namespace tubex
 	}
 
 	fixed_point_contraction(x,f, ctc_func, m_var3b_propa_fxpt_ratio, true, t_bisection, true);
-	// fixed_point_contraction(x,f, NULL, m_var3b_propa_fxpt_ratio, true, t_bisection, true); // no external call
 
 	rate = 1 - m_var3b_bisection_minrate;
        
@@ -947,9 +939,9 @@ namespace tubex
 	  try{
 	    pair<TubeVector,TubeVector> p_x = x.bisect(t_bisection,k,rate);
 	     TubeVector branch_x= p_x.second;
-	     //	     cout << " before var3b prop2 " << endl;
+
 	     fixed_point_contraction(branch_x, f, ctc_func, m_var3b_propa_fxpt_ratio, true, t_bisection, true);
-	     //	     cout << " after var3b prop2" << endl;
+
 	     if (branch_x.is_empty())
 	       x=p_x.first;
 	     //	     else {x = p_x.first | branch_x ; break;}
@@ -963,9 +955,6 @@ namespace tubex
 
 	fixed_point_contraction(x,f , ctc_func, m_var3b_propa_fxpt_ratio, true , t_bisection,true);
 	
-	//fixed_point_contraction(x,f , NULL, m_var3b_propa_fxpt_ratio, true , t_bisection,true); // no external call
-
-       
       }
     m_contraction_mode=contraction_mode;
     //    cout << " volume after var3b " << x.volume() << endl;
