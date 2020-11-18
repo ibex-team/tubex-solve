@@ -161,7 +161,7 @@ namespace tubex
       float m_var3b_fxpt_ratio = -1;   // no var3b
       float m_var3b_propa_fxpt_ratio = 0.0;
       /* Internal parameters for var3b algorithm */
-      //      float m_var3b_bisection_minrate = 0.0001;
+      //float m_var3b_bisection_minrate = 0.0001;
       float m_var3b_bisection_minrate = 0.01;
       float m_var3b_bisection_maxrate = 0.4;
       int m_var3b_bisection_ratefactor=2;

@@ -391,7 +391,7 @@ namespace tubex
     m_fig->show(true);
     #endif
     double t_init=x0[0].tdomain().lb();
-    int prev_level = 0;
+
     list<pair<pair<int,double>,TubeVector> > s;
     s.push_back(make_pair(make_pair(0,t_init), x0));
     list<TubeVector> l_solutions;
@@ -400,16 +400,7 @@ namespace tubex
     {
       int level = s.front().first.first;
       double t_bisect= s.front().first.second;
-      /*
-      if(level != prev_level && s.size() >= 20)
-
-      {
-        cout << "clustering (" << s.size() << " items)" << endl;
-	clustering(s);
-        cout << "after clustering (" << s.size() << " items)" << endl;
-        prev_level = level;
-      }
-	*/
+     
       TubeVector x = s.front().second;
       s.pop_front();
 
@@ -430,28 +421,22 @@ namespace tubex
       emptiness = x.is_empty();
       if (trace && !emptiness)    cout <<  " volume after contraction " << x.volume()  << endl;      
       if (! emptiness)
-	do
+	do // loop refining; contraction; var3b
       {
         volume_before_refining = x.volume();
         // 1. Refining
 	if(m_refining_fxpt_ratio >= 0.0)
 	  if (! refining(x))
-	    {
-	      if (m_trace)
-		cout << " end refining " <<  volume_before_refining << " after  " << x.volume() << endl; 
-	      break;}
+	    {break;}
 	if (m_trace) {
-	  cout << " volume before refining " << volume_before_refining << endl;
 	  cout << " nb_slices after refining step " << x[0].nb_slices() << endl;
 	}
 	// 2. Fixed_Point_Contractions up to the fixed point
 
 	fixed_point_contraction(x, f, ctc_func, m_propa_fxpt_ratio, false, x[0].tdomain().lb());
-	// 3.      
-	
 	emptiness = x.is_empty();
-		
-	//	double volume_before_var3b;
+	// 3. Var3b
+	
 	if (!emptiness && m_var3b_fxpt_ratio >= 0.0)
 	  fixed_point_var3b(x, f, ctc_func);
 	emptiness = x.is_empty();
@@ -460,8 +445,7 @@ namespace tubex
       
       while(!emptiness
 	    && !(stopping_condition_met(x))
-	    && ( 
-		!fixed_point_reached(volume_before_refining, x.volume(), m_refining_fxpt_ratio)));
+	    && !(fixed_point_reached(volume_before_refining, x.volume(), m_refining_fxpt_ratio)));
       // 4. Bisection
       emptiness=x.is_empty();
       if(!emptiness)
@@ -883,10 +867,7 @@ namespace tubex
   {
     //    cout << " volume before var3b " << x.volume() << endl;
 
-    //if(m_var3b_fxpt_ratio < 0.)
-    //    if(m_var3b_fxpt_ratio < 0. || x.volume() >= DBL_MAX)
-    //      return;
-
+   
     int contraction_mode = m_contraction_mode;
     m_contraction_mode=4;  // var3B calls CtcDeriv as internal contractor 
     // incremental contractors using CtcIntegration are too weak and non incremental contractors as
@@ -914,15 +895,14 @@ namespace tubex
 	while (rate < m_var3b_bisection_maxrate){
 	  try
 	    {pair<TubeVector,TubeVector> p_x = x.bisect(t_bisection,k,rate);
+             
+	     //	     cout << " x gate " << x[0].first_slice()->output_gate()  << endl;
 
-	     TubeVector branch_x= p_x.first;
-
-	     fixed_point_contraction(branch_x, f, ctc_func, m_var3b_propa_fxpt_ratio, true, t_bisection, true);
-
-	     if (branch_x.is_empty())
-	       x=p_x.second;
-	     //	     else {x = p_x.second | branch_x ; break;}
-	     else {p_x.second|= branch_x; x = p_x.second  ; break;} // no slicing
+	      fixed_point_contraction(p_x.first, f, ctc_func, m_var3b_propa_fxpt_ratio, true, t_bisection, true);
+              if (p_x.first.is_empty())
+		x=p_x.second;
+	     //	     else {x = p_x.second | p_x.first ; break;}
+	     else {p_x.second|= p_x.first; x = p_x.second  ; break;} // no slicing
 
 	     rate= m_var3b_bisection_ratefactor*rate;
 
@@ -938,14 +918,13 @@ namespace tubex
 	while (rate > 1-m_var3b_bisection_maxrate ){
 	  try{
 	    pair<TubeVector,TubeVector> p_x = x.bisect(t_bisection,k,rate);
-	     TubeVector branch_x= p_x.second;
 
-	     fixed_point_contraction(branch_x, f, ctc_func, m_var3b_propa_fxpt_ratio, true, t_bisection, true);
+	    fixed_point_contraction(p_x.second, f, ctc_func, m_var3b_propa_fxpt_ratio, true, t_bisection, true);
 
-	     if (branch_x.is_empty())
+	    if (p_x.second.is_empty())
 	       x=p_x.first;
-	     //	     else {x = p_x.first | branch_x ; break;}
-	     else {p_x.first |= branch_x ; x= p_x.first ; break;}   // no slicing
+	     //	     else {x = p_x.first |  p_x.second ; break;}
+	     else {p_x.first |= p_x.second ; x= p_x.first ; break;}   // no slicing
 	     rate=1-m_var3b_bisection_ratefactor*(1-rate);
 
 	  }
