@@ -620,17 +620,32 @@ namespace tubex
     else
       return diam_stopping_condition (x);
   }
-
+  /*
   bool Solver::diam_stopping_condition(const TubeVector& x)
   {
-    //    assert(x.size() == m_max_thickness.size());
     Vector x_max_thickness = x.max_diam();
     for(int i = 0 ; i < x.size() ; i++)
+
+
       if(x_max_thickness[i] > m_max_thickness[i])
         return false;
     return true;
   }
+  */
+
+bool Solver::diam_stopping_condition(const TubeVector& x)
+  {
   
+    for(int i = 0 ; i < x.size() ; i++){
+      for(const Slice *s = x[i].first_slice() ; s != NULL ; s= s->next_slice())
+	{if (s->codomain().diam()> m_max_thickness[i])
+	    return false;
+	}
+    }
+    return true;
+  }
+  
+
   bool Solver::gate_stopping_condition(const TubeVector& x)
   {
     for(int i = 0 ; i < x.size() ; i++)
@@ -646,7 +661,6 @@ namespace tubex
   {
     for(int i = 0 ; i < x.size() ; i++)
       {
-	
 	if(
 	   x[i].first_slice()->input_gate().diam()  > m_max_thickness[i]
 	   ||
@@ -739,7 +753,7 @@ namespace tubex
   }
 
 
-  void Solver::contraction_step(TubeVector &x, TFnc* f, void (*ctc_func)(TubeVector&, double t0, bool incremental), double t0, bool incremental) {
+  void Solver::contraction_step(TubeVector &x, TFnc* f, void (*ctc_func)(TubeVector&, double t0, bool incremental),  bool incremental, double t0) {
 	//  Fixed_Point_Contractions up to the fixed point
     fixed_point_contraction(x, f, ctc_func, m_propa_fxpt_ratio, incremental, t0);
     
