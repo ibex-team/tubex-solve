@@ -149,8 +149,8 @@ namespace tubex
 				vector<double>& slice_step, vector<double>& t_refining);
       double median_refining_threshold(const TubeVector &x, 
 				vector<double>& slice_step, vector<double>& t_refining);
-      bool refining_with_threshold(TubeVector & x, int nb_slices);
-      void refining_all_slices(TubeVector & x, int nb_slices);
+      void refining_with_threshold(TubeVector & x);
+      void refining_all_slices(TubeVector & x);
 
       void bisection_guess (TubeVector & x, TFnc& f);
       std::pair<int,std::pair<double,double>> bisection_guess(TubeVector x, TubeVector v, DynCtc* slice_ctr, TFnc& fnc, int variant);

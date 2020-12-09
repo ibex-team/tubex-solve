@@ -156,15 +156,24 @@ namespace tubex
     else if 
       (m_refining_mode==0 || x.volume()>= DBL_MAX)
       { // all slices are refined 
-	refining_all_slices(x, nb_slices);
-	//	cout << " end refining step " << x.nb_slices() << endl;
+	refining_all_slices(x);
 	return true;
       }
-    else if (m_refining_mode== 2 || m_refining_mode== 3)
-      return refining_with_threshold(x, nb_slices);
+    else if (m_refining_mode== 2 || m_refining_mode== 3){
+      int nb_refining = nb_slices/10 +1;
+      for (int k=0; k< nb_refining; k++){
+
+	double t_refining= x[0].wider_slice()->tdomain().mid();    
+	x.sample(t_refining);
+	if (k+nb_slices+1 >= m_max_slices) return true;
+      }
+      refining_with_threshold(x);
+      return true;
+    }
   }
 
-  void Solver::refining_all_slices(TubeVector & x, int nb_slices) {
+  void Solver::refining_all_slices(TubeVector & x) {
+    int nb_slices=x[0].nb_slices();
     for (int i=0; i<x.size();i++)
 	  {
 	    int k=0;
@@ -181,47 +190,35 @@ namespace tubex
   }
 
 
-  // the refining is focused on "slices " with a larger than average (or median) max difference (in all dimensions)  between input and output gates
-  bool Solver::refining_with_threshold (TubeVector & x ,int nb_slices_before){
-    
-      vector<double> t_refining;
-      vector<double>  slice_step;
+  // the refining is focused on slices  with a larger than average (or median) max difference (in all dimensions)  between input and output gates
+  void Solver::refining_with_threshold (TubeVector & x){
+    int nb_slices_before = x[0].nb_slices();
+    vector<double> t_refining;
+    vector<double>  slice_step;
 
-      double step_threshold=0;
-      if (m_refining_mode==2) step_threshold= average_refining_threshold(x, slice_step, t_refining);
-      else if (m_refining_mode==3) step_threshold= median_refining_threshold(x, slice_step, t_refining);
-      // cout << " step threshold " << step_threshold << " nb_slices before" << nb_slices_before << endl;
-      
-      for (int i=0; i<x.size();i++)
-	  {
-	    int k=0; int new_slices=0;
-	    for ( Slice*s= x[i].first_slice(); s!=NULL; s=s->next_slice()){
-	      if (new_slices +nb_slices_before >= m_max_slices) break;
+    double step_threshold=0;
+    if (m_refining_mode==2) step_threshold= average_refining_threshold(x, slice_step, t_refining);
+    else if (m_refining_mode==3) step_threshold= median_refining_threshold(x, slice_step, t_refining);
 
-	      if (slice_step[k] >= step_threshold  && (s->tdomain().diam() > 
-						       (x.tdomain().diam() / (100 * nb_slices_before))))
-		{
-		x[i].sample(s->tdomain().mid(),s);
+    double min_diam=(x.tdomain().diam() / (100 * nb_slices_before));      
+    for (int i=0; i<x.size();i++)
+      {
+	int k=0; 
+	int new_slices=0; 
 
-		s=s->next_slice();
-		new_slices++;
-		}
-	      k++;
+	for ( Slice*s= x[i].first_slice(); s!=NULL; s=s->next_slice()){
+	  if (new_slices +nb_slices_before >= m_max_slices) break;
+
+	  if (slice_step[k] >= step_threshold  && (s->tdomain().diam() > min_diam))
+	    {
+	      x[i].sample(s->tdomain().mid(),s);
+	      //     cout << " sample " << s->tdomain().mid() << endl;
+	      s=s->next_slice();
+	      new_slices++;
 	    }
-	    //	    cout << "new slices " << new_slices << endl;
-	  }
-
-        
-      //      if (nb_slices_before < m_max_slices && x[0].nb_slices() == nb_slices_before)  // patch to avoid infinite loops (the selected slices could not be refined)
-      int nb_slices= x[0].nb_slices();
-      if (nb_slices < m_max_slices && nb_slices < 1.01* nb_slices_before)  // minimum new slices : 0.01 nb_slices
-	for (int k=0; k<t_refining.size(); k++){
-	  x.sample(t_refining[k]);
-          nb_slices++;
-	  if (nb_slices >= m_max_slices) break;
+	  k++;
 	}
-
-      return true;
+      }
   }
 
   
@@ -237,24 +234,22 @@ namespace tubex
 	  s[k]=x[k].first_slice();
 
 	for (const Slice*slice=s[0]; slice!=NULL; slice=slice->next_slice()){
-
 	  t_refining.push_back(slice->tdomain().mid());
 	  //          cout << " t_refining " << slice->tdomain().mid() << endl;
 	  double step_max= fabs(slice->output_gate().mid() - slice->input_gate().mid());
-	  //	  cout << " step 0 " << step_max << endl;
+
 	  for (int k=1; k< x.size(); k++){
-	    //	    cout << " step 1 " << s[k]->output_gate().mid() - s[k]->input_gate().mid() << endl;
+
 	    step_max=std::max(step_max,fabs(s[k]->output_gate().mid() - s[k]->input_gate().mid()));
 
 	    s[k]=s[k]->next_slice();
 	  }
-	  //	  cout << " step max " << step_max << endl;
+	  //   cout << " step max " << step_max << endl;
 	  slice_step.push_back(step_max);
 	  if (step_max < DBL_MAX)  // to not take into account infinite gates in average computation
 	    {
 	      stepmed.push_back(step_max); // storage for computing the median value
 	    }
-
 	}
 	
 	sort(stepmed.begin(),stepmed.end());
@@ -514,7 +509,6 @@ namespace tubex
 	  {
 	    *it2 = (*it1 | *it2);
 	    clustering = true;
-	    //	cout << " tube " << nn+1 << " in cluster " << nn1+1 << endl;
 	    //	cout << ", ti↦" << (*it2)(it2->domain().lb()) << endl;
 	    if (m_trace) cout << " tube " << nn+1 << " in cluster " << nn1+1 << endl;
 	    break;
